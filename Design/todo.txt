@@ -1,0 +1,319 @@
+================================================================================
+ GP-OYUN — MASTER TODO LIST
+ Last Updated: 2026-04-22
+================================================================================
+
+================================================================================
+ PHASE 0: FOUNDATION — "Hello World" (MUST DO FIRST)
+================================================================================
+
+[ ] 0.1  Set up Unity project structure (URP pipeline, folder conventions)
+[ ] 0.2  Import a single placeholder character FBX (T-pose, no rig yet)
+[ ] 0.3  Build a flat ground plane (32×18 grid, cobblestone material)
+[ ] 0.4  Set up orthographic camera at (0, 18, -12) rot 45°, ortho size 9.5
+[ ] 0.5  WASD player movement script — physics-based, no NavMeshAgent
+[ ] 0.6  Place 3 placeholder cubes as environment objects (bakery, bench, board)
+[ ] 0.7  NavMesh bake on ground — verify NPC agent walks from A to B
+[ ] 0.8  Single NPC walks a loop: start → bakery → bench → start (coroutine)
+[ ] 0.9  Verify: character does not fall through ground, no collision failures
+[ ] 0.10 Basic day cycle timer: Morning → Midday → Afternoon → Evening → Night
+         (just a float clock, no visuals yet — logs phase changes)
+[ ] 0.11 EventBus singleton — publish/subscribe test: DayPhaseChangedEvent
+
+>>> GATE: Do NOT proceed until 0.1–0.11 all pass. Scripts must work.
+
+================================================================================
+ PHASE 1: CHARACTER & RIGGING PIPELINE
+================================================================================
+
+--- 1A: Blender Modelling ---
+[ ] 1A.1  Design base humanoid mesh (low-poly stylised, ~5k tris)
+[ ] 1A.2  Create 8 character variants from base mesh:
+           [ ] Agop (Baker) — round build, flour apron
+           [ ] Fatma Hanım (Gossip) — slight, quick build
+           [ ] Leila (Artist) — tall, loose clothing
+           [ ] Hüseyin Bey (Elder) — lean, cane, flat cap
+           [ ] Mustafa (Chess Partner) — stocky, grey beard
+           [ ] Selin (Young Mother) — with pram as separate object
+           [ ] Mihail (Flower Vendor) — Mediterranean, expressive hands
+           [ ] Ayşe (New Arrival) — cautious posture
+[ ] 1A.3  Create Player character — "The Journalist" — camera prop in hand
+
+--- 1B: Rigging ---
+[ ] 1B.1  Humanoid rig with proper bone naming for Unity Mecanim
+[ ] 1B.2  Face rig bones for blend shapes (brow, eye, mouth regions)
+           NOTE: Keep facial rigs simple! No detailed FACS system.
+           Focus on exaggerated, readable expressions at isometric distance.
+[ ] 1B.3  Kimono / clothing rigging — ensure cloth follows body movement
+[ ] 1B.4  Weight painting pass — verify natural deformation (walk, sit, wave)
+
+--- 1C: Animation ---
+[ ] 1C.1  Base locomotion set per character:
+           [ ] Idle (standing)
+           [ ] Idle (sitting)
+           [ ] Walk
+           [ ] Run (optional, Fatma only)
+[ ] 1C.2  Gesture animation library (shared, with per-character overrides):
+           [ ] Nod_Slow, Nod_Fast
+           [ ] HeadShake
+           [ ] Shrug
+           [ ] ArmsCross
+           [ ] HandsToMouth
+           [ ] ClaspHands
+           [ ] PointAt
+           [ ] WaveGoodbye
+           [ ] Stomp
+           [ ] EmbraceAir
+           [ ] LookAround
+           [ ] BowHead
+           [ ] Spin_Small
+           [ ] ThumbsUp
+           [ ] Clap
+[ ] 1C.3  Character-specific gestures:
+           [ ] Leila: SketchAir
+           [ ] Hüseyin: FeedPigeons
+           [ ] Agop: Knead dough, hand-out bread
+           [ ] Selin: Push pram, ProtectivePose
+           [ ] Fatma: Dramatic gasp, rapid pointing
+[ ] 1C.4  Interaction pair animations:
+           [ ] Silent greeting exchange
+           [ ] Table sit conversation loop
+           [ ] Chess game move gestures
+
+--- 1D: Export & Import ---
+[ ] 1D.1  FBX export settings: Y-up, 0.01 scale, embedded textures
+[ ] 1D.2  Import into Unity — verify Mecanim humanoid avatar mapping
+[ ] 1D.3  Animator Controller template: 4 layers (Base, UpperBody, Head, Face)
+[ ] 1D.4  Verify additive blending: walk + wave + head-turn simultaneously
+[ ] 1D.5  Use outsource solutions where possible (Mixamo for base anims)
+           NOTE: Don't reinvent basics. Focus effort on emotional gestures.
+
+================================================================================
+ PHASE 2: ENVIRONMENT & WORLD
+================================================================================
+
+[ ] 2.1  Build full town square scene in Unity (32×18 grid)
+[ ] 2.2  Model and place all static environment objects:
+          [ ] Cobblestone ground tiles
+          [ ] Old stone fountain (centre)
+          [ ] Clock tower (top-right)
+          [ ] Old oak tree (park zone) — NOTE: trees are the ONLY thing that
+              can partially block camera view. All buildings/architecture must
+              remain SHORT and not block character visibility.
+          [ ] Flower beds (park perimeter)
+          [ ] Brick walls (edges, scene boundaries)
+          [ ] Street lamp posts (grid paths)
+          [ ] Window boxes (building facades)
+[ ] 2.3  Model and place all interactive objects:
+          [ ] Newspaper Board (centre-left)
+          [ ] Park Bench ×2
+          [ ] Bakery counter
+          [ ] Cafe tables ×3
+          [ ] Chess table
+          [ ] Newspaper Office (player zone)
+          [ ] Post Box
+          [ ] Physics props (chess pieces, flower pots)
+[ ] 2.4  Ambient animated objects:
+          [ ] Pigeons (scatter-on-approach animation)
+          [ ] Windmill (background, slow spin)
+          [ ] Laundry line (cloth sim)
+          [ ] Shop signs (slow swing)
+          [ ] Newspaper pages (flutter at night)
+[ ] 2.5  Set up collision layers (6 layers as per design doc 06)
+[ ] 2.6  Bake final NavMesh with all obstacles
+[ ] 2.7  Camera view verification — NOTHING except trees should block
+         character visibility. Buildings stay small. League-of-Legends
+         style map: markets, cafes, public places slightly farther back.
+
+================================================================================
+ PHASE 3: NPC AI — FINITE STATE MACHINE (CRITICAL)
+================================================================================
+
+NOTE: We need a STRICT, well-thought-out FSM for objects, NPCs, newspaper,
+      day/night, and overall scene. This is the heart of the game.
+      Write FSM definitions in a separate /Scripts/FSM/ folder so they
+      can be tested independently.
+
+--- 3A: NPC State Machine ---
+[ ] 3A.1  Define NPC states:
+           IDLE, WALKING, SITTING, READING_NEWS, REACTING, CONVERSING,
+           WORKING, EATING, APPROACHING, FLEEING, HIGH_ALERT
+[ ] 3A.2  Define transitions and priorities:
+           Routine < EmotionReaction < HighAlert < Scripted
+[ ] 3A.3  Implement RoutineScheduler — time-based daily schedule per NPC
+[ ] 3A.4  Implement EmotionStateMachine — 6-axis model with decay
+[ ] 3A.5  Implement ProximityDetector — who is nearby, facing detection
+[ ] 3A.6  Implement NewsMemory — 7-day sliding window per NPC
+[ ] 3A.7  Implement RelationshipMap — per-NPC sentiment values
+
+--- 3B: NPC Coroutine System ---
+[ ] 3B.1  Each NPC runs its own coroutine stack (parallel execution)
+[ ] 3B.2  Player presence does NOT pause NPC coroutines
+[ ] 3B.3  Implement all 8 NPC daily routines (from design doc 03)
+[ ] 3B.4  Test: all 8 NPCs running simultaneously without conflicts
+
+--- 3C: NPC Interaction System ---
+[ ] 3C.1  Silent conversation trigger: 2 NPCs within 1.5 tiles + facing
+[ ] 3C.2  Gesture exchange sequences (3-step: greet → exchange → farewell)
+[ ] 3C.3  Relationship-based response selection (friendly/neutral/hostile)
+[ ] 3C.4  Special pair: Hüseyin + Mustafa opposing emotion mechanic
+[ ] 3C.5  Gossip propagation: Fatma carries + spreads emotion to others
+
+--- 3D: Object FSM ---
+[ ] 3D.1  Newspaper Board states: Empty → Posted → Read
+[ ] 3D.2  Bench states: Empty → Occupied(1) → Occupied(2) → Conversation
+[ ] 3D.3  Cafe table states: Empty → Seated(1) → Seated(2) → TableFlip
+[ ] 3D.4  Chess table states: Waiting → Playing → GameEnd
+[ ] 3D.5  Pram states: Normal → Alert (on collision)
+
+--- 3E: Day/Night FSM ---
+[ ] 3E.1  5 phases: Morning → Midday → Afternoon → Evening → Night
+[ ] 3E.2  Phase durations (real-time minutes, configurable)
+[ ] 3E.3  Phase transition triggers all NPC routine updates
+[ ] 3E.4  Night transition: reset props, clear board, advance day counter
+
+================================================================================
+ PHASE 4: NEWSPAPER SYSTEM
+================================================================================
+
+[ ] 4.1  Camera tool — RenderTexture snapshot system
+[ ] 4.2  Shot counter per day (3–5 shots, cooldown 4s between)
+[ ] 4.3  Photo tag detection (silent scoring):
+          [ ] FaceCapture — NPC face visible
+          [ ] InteractionCapture — 2+ NPCs interacting
+          [ ] PeakEmotion — NPC at ≥0.85 emotion
+          [ ] Chaos — displaced prop visible
+          [ ] Atmospheric — weather/environment focus
+[ ] 4.4  Photo category auto-suggestion (Scandal/Celebration/Disaster/Local/Global)
+[ ] 4.5  Player override of category before publishing
+[ ] 4.6  Publishing UI — 3 slots, drag-drop, category assignment
+[ ] 4.7  Board morning sequence — paper unfurls, NPCs queue to read
+[ ] 4.8  NPC reaction matrix — personality × category → emotion output
+[ ] 4.9  Memory accumulation — 3+ days same category → baseline shift
+[ ] 4.10 Photo archive — persistent gallery of all captured moments
+[ ] 4.11 Moral dimension — no labels, player infers consequences from behaviour
+
+================================================================================
+ PHASE 5: EMOTION & PANTOMIME ENGINE
+================================================================================
+
+[ ] 5.1  6-axis emotion model implementation (Joy/Sadness/Anger/Fear/Surprise/Disgust)
+[ ] 5.2  Emotion-to-face mapper (blend shapes driven by emotion vector)
+         NOTE: Keep it SIMPLE. Exaggeration > detail. Emoji-spreading style.
+         Body movements are MORE IMPORTANT than facial micro-expressions.
+[ ] 5.3  Body language layer — separate from face, additive blending
+[ ] 5.4  Emotion decay system — half-life per personality trait
+[ ] 5.5  Peak Moment detection (≥0.85 on any axis)
+[ ] 5.6  Subtle visual indicator for Peak Moment (rim light, particle)
+[ ] 5.7  Camera UI glow when pointing at Peak Moment NPC
+
+================================================================================
+ PHASE 6: RENDERING & VISUAL POLISH
+================================================================================
+
+[ ] 6.1  URP post-processing profile:
+          [ ] SSAO for depth
+          [ ] Colour grading linked to TownMoodIndex
+          [ ] Vignette (adjusts with mood)
+[ ] 6.2  Day/Night lighting transitions:
+          [ ] Morning: cool amber horizon, soft haze
+          [ ] Midday: sharp shadows, peak contrast
+          [ ] Afternoon: golden hour, long shadows
+          [ ] Evening: dusk purple-orange, lamp posts ON
+          [ ] Night: desaturate → fade → morning
+[ ] 6.3  Y-based sorting for 2.5D depth (sortingOrder = -Z * 10)
+[ ] 6.4  Sorting layers setup (Background → Ground → Props → NPC → VFX → UI)
+[ ] 6.5  Particle effects: paper flutter, dust, pigeon feathers
+[ ] 6.6  Weather system (rain puddles shader, wind effects)
+[ ] 6.7  Colour palette implementation (from design doc 07)
+[ ] 6.8  Typography for Newspaper UI (Playfair Display, EB Garamond, Courier Prime)
+[ ] 6.9  Fictional alphabet for all in-world text (language-agnostic world)
+
+================================================================================
+ PHASE 7: SOCIAL MAP & RELATIONSHIPS
+================================================================================
+
+[ ] 7.1  Relationship graph data structure (NPC-to-NPC sentiment float)
+[ ] 7.2  Initial relationship values for all 28 NPC pairs
+[ ] 7.3  Relationship modifiers from shared events (photo, conversation, proximity)
+[ ] 7.4  Relationship visualisation (debug view: who knows whom, connection strength)
+[ ] 7.5  Player relationship tracking (separate from NPC-NPC relationships)
+[ ] 7.6  "New Arrival" (Ayşe) — blank slate personality that evolves daily
+[ ] 7.7  Player reputation system — if everyone hates you, NPCs flee from camera
+[ ] 7.8  Photo-taking consequences: NPCs may refuse to be photographed
+
+================================================================================
+ PHASE 8: AUDIO & AMBIANCE
+================================================================================
+
+[ ] 8.1  Ambient soundscape (birds, wind, fountain water, footsteps)
+[ ] 8.2  Non-verbal NPC audio (sighs, gasps, hums, laughs — NO words)
+[ ] 8.3  Phase-of-day ambient music transitions
+[ ] 8.4  Emotional audio stingers (subtle, tied to NPCEmotionChangedEvent)
+[ ] 8.5  Photo capture shutter sound
+[ ] 8.6  Newspaper publish sound (printing press vibe)
+[ ] 8.7  Night transition lullaby/wind-down audio
+
+================================================================================
+ PHASE 9: UI/UX
+================================================================================
+
+[ ] 9.1  Day counter and phase indicator (minimal, diegetic if possible)
+[ ] 9.2  Camera viewfinder UI overlay when capture mode active
+[ ] 9.3  Photo roll UI (today's captures, thumbnail strip)
+[ ] 9.4  Publishing interface (slots, categories, confirm)
+[ ] 9.5  Photo archive gallery (browse past captures by day)
+[ ] 9.6  Town Mood Index visualisation (subtle, ambient indicator)
+[ ] 9.7  No HUD clutter — everything should feel like part of the world
+
+================================================================================
+ PHASE 10: STORY BEATS & PROGRESSION
+================================================================================
+
+[ ] 10.1 Define 5–7 scripted story beats triggered by emotional thresholds
+[ ] 10.2 Chapter system — major town events as chapter boundaries
+[ ] 10.3 "Introduction" sequence — player arrives, must earn trust
+[ ] 10.4 Business mechanic — player must work (take photos, publish) to earn
+[ ] 10.5 End states: positive (thriving town) / neutral / negative (abandoned)
+
+================================================================================
+ PHASE 11: TESTING & POLISH
+================================================================================
+
+[ ] 11.1 FSM stress test — all NPCs running 30+ in-game days
+[ ] 11.2 Performance profiling — 8 NPC coroutines + physics + rendering
+[ ] 11.3 Edge case testing: all NPCs at same location simultaneously
+[ ] 11.4 Playtest: can player understand NPC emotions without ANY text?
+[ ] 11.5 Playtest: is the newspaper mechanic engaging without scores?
+[ ] 11.6 Build standalone demo (1 chapter, 3 in-game days)
+
+================================================================================
+ NOTES FROM DESIGN DISCUSSIONS
+================================================================================
+
+- Facial expressions: DON'T over-detail! It's too much work for isometric view.
+  Focus on EMOJI-SPREADING style, body movements, and exaggerated gestures.
+  
+- Good rigging + kimono/clothing usage is more important than face detail.
+
+- Map layout: League of Legends style camera. Trees can partially block view,
+  but ALL buildings/architecture must be short. Characters must ALWAYS be visible.
+  Markets, cafes, public places slightly set back from main view.
+
+- Social map is critical: who is friend, who is enemy, connection strength.
+
+- Main character is a newcomer — must introduce self, earn trust, work for living.
+  If all NPCs hate the player, they flee from camera = can't take pictures = can't work.
+
+- Day/month system: sun rises, goes down, night starts. Time keeps ticking.
+
+- FSM is the most critical technical component. Must be strict, well-tested,
+  written in separate folder, independently runnable.
+
+- Basics must work first: characters don't fall through ground, no collisions
+  breaking, walk/run/look must be natural. Use outsource solutions (Mixamo etc.)
+  wherever possible to save time.
+
+- Hello world first! Move, go, do work — verify scripts before connecting systems.
+
+================================================================================
