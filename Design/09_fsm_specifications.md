@@ -111,7 +111,7 @@ When a higher-priority state demands transition, the current state is **interrup
 |---|---|
 | → MORNING | Board posts news, NPCs start routines, weather set |
 | → MIDDAY | Peak NPC activity flag, photo value bonus |
-| → AFTERNOON | Gossip propagation peak, emotion ripple max |
+| → AFTERNOON | Peak social interaction, internal emotion ripple max |
 | → EVENING | Office opens, NPCs wind down, lamp posts ON |
 | → NIGHT | Board cleared, props reset, emotions processed, day++ |
 
@@ -258,36 +258,6 @@ When a higher-priority state demands transition, the current state is **interrup
 
 ---
 
-## 9. Gossip Propagation FSM (Fatma-specific)
-
-```
-      ┌─────────────────┐
-      │  NO_GOSSIP      │ ← Fatma has no fresh news
-      └────────┬────────┘
-               │ Fatma reads newspaper board
-               ▼
-      ┌─────────────────┐
-      │  CARRYING       │ ← Holds EmotionCategory for 30 min game-time
-      └────────┬────────┘
-               │ Proximity detected (NPC_B)
-               ▼
-      ┌─────────────────┐
-      │  INITIATING     │ → Rotation toward NPC_B, Greet gesture
-      └────────┬────────┘
-               │ NPC_B acknowledges
-               ▼
-      ┌─────────────────┐
-      │  EXCHANGING     │ → Shared animation loop, News transfer
-      └────────┬────────┘ → Target plays "heard something" gesture
-               │ Transfer complete (2s)
-               ▼
-      ┌─────────────────┐
-      │  FAREWELL       │ → Brief wave, Fatma's intensity drops %15
-      └────────┬────────┘
-               └──→ CARRYING (Seek next) or DEPLETED
-```
-
----
 
 ## 10. Player Reputation FSM
 
