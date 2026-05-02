@@ -71,24 +71,33 @@ namespace GPOyun.Core
                 Debug.LogWarning($"[Bootstrap] {name} was missing! Created a default one.");
             }
         }
-
         #if UNITY_EDITOR
         [ContextMenu("Project Setup: Create Folders")]
         public void SetupFolders()
         {
-            string[] folders = { "_Game", "_Game/Prefabs", "_Game/Materials", "_Game/Scenes", "_Game/Scripts" };
+            // Use Path.Combine to build the subfolder strings safely for both Mac and Windows
+            string[] folders = {
+                "_Game",
+                System.IO.Path.Combine("_Game", "Prefabs"),
+                System.IO.Path.Combine("_Game", "Materials"),
+                System.IO.Path.Combine("_Game", "Scenes"),
+                System.IO.Path.Combine("_Game", "Scripts")
+            };
+
             foreach (string folder in folders)
             {
-                string path = System.IO.Path.Combine(Application.dataPath, folder);
+                // Combine the base data path with the now safely-formatted folder path
+                string path = System.IO.Path.Combine(UnityEngine.Application.dataPath, folder);
+
                 if (!System.IO.Directory.Exists(path))
                 {
                     System.IO.Directory.CreateDirectory(path);
-                    Debug.Log($"Created folder: {folder}");
+                    UnityEngine.Debug.Log($"Created folder: {folder}");
                 }
             }
+
             UnityEditor.AssetDatabase.Refresh();
         }
-
         [ContextMenu("Scene Setup: Create Hierarchy")]
         public void SetupHierarchy()
         {
@@ -99,14 +108,14 @@ namespace GPOyun.Core
             {
                 new GameObject("[BOOTSTRAP]").AddComponent<GPOyunBootstrap>();
             }
-            
+
             CheckAndAdd<EventBus>(core, "EventBus");
             CheckAndAdd<TimeManager>(core, "TimeManager");
             CheckAndAdd<NewspaperManager>(core, "NewspaperManager");
 
             CheckAndAdd<SplashController>(ui, "SplashScreen");
             CheckAndAdd<SettingsController>(ui, "SettingsScreen");
-            
+
             Debug.Log("[Bootstrap] Hierarchy setup complete.");
         }
 
@@ -114,10 +123,10 @@ namespace GPOyun.Core
         public void NuclearColdStart()
         {
             Debug.Log("[Bootstrap] Starting Nuclear Cold Start...");
-            
+
             SetupFolders();
             SetupHierarchy();
-            
+
             GameObject core = GameObject.Find("[CORE]");
             GameObject ui = GameObject.Find("[UI]");
 
@@ -163,7 +172,7 @@ namespace GPOyun.Core
             {
                 cam.tag = "MainCamera";
             }
-            
+
             cam.transform.position = new Vector3(0, 25, -20);
             cam.transform.rotation = Quaternion.Euler(55, 0, 0);
             cam.fieldOfView = 60;
@@ -259,14 +268,14 @@ namespace GPOyun.Core
             var splash = FindAnyObjectByType<SplashController>() ?? new GameObject("SplashController").AddComponent<SplashController>();
             splash.transform.SetParent(parent.transform);
             VisualUtils.SetupMockSplash(splash);
-            
+
             var settings = FindAnyObjectByType<SettingsController>() ?? new GameObject("SettingsController").AddComponent<SettingsController>();
             settings.transform.SetParent(parent.transform);
             VisualUtils.SetupMockSettings(settings);
 
             var editorial = FindAnyObjectByType<EditorialUI>() ?? new GameObject("EditorialUI").AddComponent<EditorialUI>();
             editorial.transform.SetParent(parent.transform);
-            
+
             splashController = splash;
         }
 
@@ -282,4 +291,3 @@ namespace GPOyun.Core
         #endif
     }
 }
-
