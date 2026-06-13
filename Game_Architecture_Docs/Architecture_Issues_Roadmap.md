@@ -2,7 +2,7 @@
 
 PRIORITY | ISSUE_NAME | DESCRIPTION | REFERENCED_FILES | ACTION_PLAN
 ---|---|---|---|---
-High | Singleton_Coupling | Core managers tightly coupled; testing impossible. | GameManager.cs, TimeManager.cs | Remove Instance accessors. Implement IoC Container.
+[DONE] High | Singleton_Coupling | Core managers tightly coupled; testing impossible. | GameManager.cs, TimeManager.cs | Remove Instance accessors. Implement IoC Container.
 High | Synchronous_IO_Stutter | Capturing photos blocks main thread, freezing game. | TakePictureUseCase.cs, CameraController.cs | [DONE] Move Texture2D.EncodeToPNG to async Task.Run.
 High | Matrix_Garbage_Collection | String concatenation in relationship matrix causes memory spikes. | RelationshipMatrix.cs | [DONE] Replace string keys with struct NPCPair.
 High | Dual_Brain_Desynchronization | Enum state and Utility AI drift out of sync. | NPCController.cs, NPCActionPlanner.cs | Replace Enum FSM with GOAP or Behavior Tree.
@@ -17,6 +17,9 @@ Low | Legacy_OnGUI_Usage | Emoji reactions use obsolete Unity 4 UI methods. | HU
 Low | Dead_End_Transitions | NPCs trapped in WalkingHome state when morning arrives. | NPCController.cs, MoveAction.cs | Flush active queue on TimeManager.OnMorningArrived.
 Low | Procedural_Gen_Stagnation | Town built via code primitives, blocking level designers. | TownSquareBuilder.cs | Replace GameObject.CreatePrimitive with Prefab Instantiation.
 Low | Missing_Audio_Cues | Systemic feedback lacks spatial audio confirmation. | None (Missing System) | Create AudioManager listening to EventBus.
+[DONE] High | Cognitive_Engine_Missing | NPCs lack persistent memory of aims, contexts, and complex emotions. | NPCBrain.cs (New), NPCNeeds.cs | Create unified NPCBrain to map Needs -> Aims/Emotions.
+[DONE] High | Static_Emojis | Emojis are purely visual and do not affect the simulation. | HUDManager.cs, NPCBrain.cs | Convert emojis to physical AoE raycasts affecting nearby brains.
+[DONE] High | Predictable_Utility | NPCs always pick optimal actions, feeling robotic. | NPCActionPlanner.cs | Implement 'Whim' Chaos Multiplier (5% base chance).
 
 ## What is Missing (Architectural Gaps)
 1. **Audio Subsystem:** Completely missing. Audio is fragmented PlayOneShot calls.

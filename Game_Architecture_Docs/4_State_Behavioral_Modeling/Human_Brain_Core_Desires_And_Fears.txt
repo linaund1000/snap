@@ -1,0 +1,105 @@
+HUMAN BRAIN: CORE DESIRES AND EXISTENTIAL FEARS (PART 1)
+======================================================
+1. The NPC Brain operates fundamentally on a physiological layer of Desires (Aims) and psychological Fears.
+2. Unlike a traditional state machine, these desires are continuous floats, evaluated at every simulation tick.
+3. The absolute priority of the Utility AI is to fulfill the most critical deficit across these vectors.
+4. Desires decay over time, mimicking human entropy. Fears spike instantly based on environmental stimuli.
+5. 
+6. --- DESIRE 1: SOCIAL CONNECTION (THE HERD INSTINCT) ---
+7. Social Connection tracks the innate human need to be perceived and validated by the tribe.
+8. Baseline value: 100 (Fully satiated).
+9. Decay rate: -0.5 per second (accelerated for Extroverts, decelerated for Introverts).
+10. Deficit Threshold (Low): 40. Below 40, the NPC begins feeling "Lonely".
+11. Critical Deficit (Critical): 15. Below 15, the NPC experiences deep "Sadness".
+12. Aims triggered by deficit: "Seeking Gossip", "Hugging Friends", "Group Hangout".
+13. Social Connection is satisfied by physical proximity, active dialogue, and exchanging positive emojis.
+14. It is destroyed by witnessing friends argue, being the target of a Rage (🤬) emoji, or isolation.
+15. Extroverts have a high baseline ceiling but rapidly decaying Social Connection.
+16. Introverts have a low baseline ceiling and slowly decaying Social Connection.
+17. 
+18. --- DESIRE 2: ENTERTAINMENT AND CURIOSITY ---
+19. Entertainment drives the town's simulation cycle. NPCs must consume information to prevent apathy.
+20. Baseline value: 100 (Fully satiated).
+21. Decay rate: -1.0 per second. The fastest decaying need in the simulation.
+22. Deficit Threshold: 50. Below 50, the NPC feels "Bored".
+23. Critical Deficit: 20. Below 20, the NPC becomes "Apathetic" and may sit on benches indefinitely.
+24. Aims triggered by deficit: "Wandering to Plaza", "Reading Newspaper", "Observing Commotion".
+25. Entertainment is exclusively satisfied by the Player's actions (publishing newspapers) or dramatic events.
+26. If an NPC reads a scandalous headline, their Entertainment spikes by +80 instantly.
+27. If an NPC reads a boring headline (Low Interest), Entertainment only increases by +10.
+28. This creates a systemic reliance on the Player to provide drama to keep the town "alive".
+29. 
+30. --- DESIRE 3: AUTONOMY AND REST (THE INTROVERSION DRIVE) ---
+31. Autonomy is the psychological battery. It drains when the NPC is surrounded by others.
+32. Baseline value: 100 (Fully Rested).
+33. Drain rate: -2.0 per second *per nearby NPC*.
+34. Deficit Threshold: 30. Below 30, the NPC feels "Overwhelmed".
+35. Critical Deficit: 10. Below 10, the NPC becomes "Angry" or "Furious".
+36. Aims triggered by deficit: "Fleeing Crowd", "Walking Home", "Chilling Alone in Forest".
+37. Autonomy is restored rapidly (+5.0 per second) when the NPC is completely alone.
+38. This guarantees that crowds naturally disperse. An infinite gathering is impossible.
+39. Once Autonomy hits 0, the NPC will forcibly drop whatever they are doing, emit a 🤬, and leave.
+40. 
+41. --- FEAR 1: INTRUSIVE SURVEILLANCE (THE CAMERA THREAT) ---
+42. Fear is not a decaying need; it is an immediate survival response to stimuli.
+43. The primary fear for all NPCs is the Player's Camera, representing an invasion of privacy.
+44. When the Player raises the Viewfinder, a Raycast intersects the NPC's vision cone.
+45. This instantly spikes the "Surveillance Fear" metric.
+46. If the NPC is Neurotic, the spike is multiplied by 3x.
+47. Resulting Emotion: Fearful -> Angry.
+48. Aims triggered: "Covering Face", "Fleeing Player", "Confronting Player".
+49. The fear spike decays slowly (-5.0 per second). 
+50. If the Player takes a flash photo, the fear spikes to maximum (100) instantly.
+51. 
+52. --- FEAR 2: SOCIAL OSTRACIZATION (THE SCANDAL THREAT) ---
+53. The deepest psychological fear is being publicly humiliated in the Newspaper.
+54. When an NPC reads the Newspaper, the Brain checks the Primary Subject of the photo.
+55. If the NPC is the subject of a "Scandal" or "Disaster" category, Social Ostracization triggers.
+56. This is a catastrophic psychological event.
+57. Social Connection drops to 0 instantly.
+58. Autonomy drops to 0 instantly.
+59. Resulting Emotion: Devastation / Fury.
+60. Aims triggered: "Running Home", "Weeping", "Attacking the Newspaper Board".
+61. The NPC will completely avoid the town square for the next 24 in-game hours.
+62. 
+63. --- EMOTIONAL MAPPING MATRIX ---
+64. Emotions are the *symptom*, not the *disease*.
+65. - HAPPY: Social > 60 AND Autonomy > 40.
+66. - SAD: Social < 20 AND Fear = 0.
+67. - ANGRY: Autonomy < 10 OR Ostracization Triggered.
+68. - FEARFUL: Surveillance Fear > 50.
+69. - BORED: Entertainment < 40 AND Autonomy > 60.
+70. - SURPRISED: Sudden +50 spike in Entertainment (Reading a shocking headline).
+71. - DISGUSTED: Proximity to an NPC with <-50 Relationship score.
+72. 
+73. --- PHYSIOLOGICAL FATIGUE (ENERGY) ---
+74. Underneath psychological desires lies pure physiological Energy.
+75. Energy strictly limits the NPC's ability to act on their desires.
+76. Baseline: 100.
+77. Drain: -0.1 per second constantly.
+78. If Energy < 20, the NPC cannot Run.
+79. If Energy < 5, the NPC will collapse and sleep on the ground, ignoring all other desires.
+80. 
+81. --- THE ROLE OF PERSONALITY (THE BIG FIVE) ---
+82. The NPCPersonalityData ScriptableObject acts as the filter for all Needs.
+83. OPENNESS: Modifies Entertainment baseline. High openness = gets bored faster.
+84. CONSCIENTIOUSNESS: Modifies Energy drain. High conscientiousness = walks slower, conserves energy.
+85. EXTRAVERSION: Modifies Social Connection decay. High extraversion = demands constant interaction.
+86. AGREEABLENESS: Modifies Anger threshold. High agreeableness = tolerates low Autonomy longer.
+87. NEUROTICISM: Modifies Fear spikes. High neuroticism = massive reactions to the camera.
+88. 
+89. --- SUMMARY OF THE DESIRE ENGINE ---
+90. The Brain is an engine constantly trying to balance 4 fluid tanks (Social, Entertainment, Autonomy, Energy)
+91. while dodging immediate psychological spikes (Fear).
+92. The Utility AI Action Planner looks at these tanks every second.
+93. It scores every possible Action based on which tank is the emptiest.
+94. If Entertainment is empty, "ReadNewsAction" scores highest.
+95. If Autonomy is empty, "GoHomeAction" scores highest.
+96. The current state of these tanks is precisely what will be displayed in the new Target Inspector UI.
+97. 
+98. -
+99. -
+100. -
+101. -
+102. -
+103. - End of Core Desires and Fears Deep Analysis.

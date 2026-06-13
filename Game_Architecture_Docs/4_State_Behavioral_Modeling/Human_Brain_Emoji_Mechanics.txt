@@ -1,0 +1,102 @@
+HUMAN BRAIN: EMOJI MECHANICS AND AOE EFFECTS (PART 4)
+=====================================================
+1. Emojis in GPOyun are not merely visual feedback icons for the Player.
+2. They are physical, systemic events inside the simulation engine.
+3. When an NPC emits an emoji, it casts an Area of Effect (AoE) sphere that alters the Brain State of any NPC caught in the blast radius.
+4. This creates cascading, butterfly-effect reactions across the town square.
+5. 
+6. --- THE EMISSION MECHANIC ---
+7. Emojis are emitted via the `TriggerReaction(string emoji, Color color)` method.
+8. Internally, this method now instantiates an invisible `EmojiCollider` sphere (Radius: 5 meters).
+9. Any `NPCBrain` inside this collider processes the emoji as a direct Stimulus.
+10. The effect of the emoji depends entirely on the type of emoji cast.
+11. 
+12. --- THE RAGE EMOJI (🤬) ---
+13. Visual: A pulsing red symbol.
+14. Trigger: An NPC's Autonomy drops to 0, or they read a scandalous article about themselves.
+15. AoE Effect (Tension):
+16.   - All NPCs in radius immediately lose -20 Autonomy (Stress).
+17.   - If an observing NPC's Autonomy drops below 30 due to this blast, they catch the "Angry" emotion.
+18.   - If the observing NPC is highly Agreeable, they instead catch the "Fearful" emotion and gain a "Flee" Aim.
+19. Cascade Potential: High. One Rage emoji can stress out a crowd, causing multiple NPCs to hit 0 Autonomy, emitting their own Rage emojis in a chain reaction.
+20. 
+21. --- THE LOVE EMOJI (🥰) ---
+22. Visual: Floating pink hearts.
+23. Trigger: Two friends successfully complete a gossip session, or an NPC is photographed by a highly respected Player.
+24. AoE Effect (Warmth):
+25.   - All NPCs in radius instantly regain +15 Social Connection.
+26.   - All NPCs in radius gain a +2 Relationship boost towards the caster.
+27.   - If an observing NPC is "Sad", this emoji acts as a cure, immediately returning them to "Neutral".
+28. Cascade Potential: Low. Love emojis stabilize the environment and prevent rage cascades.
+29. 
+30. --- THE HEARTBREAK EMOJI (💔) ---
+31. Visual: A cracking terracotta heart.
+32. Trigger: An NPC is rejected socially, or reads a scandalous article about a friend.
+33. AoE Effect (Empathy / Schadenfreude):
+34.   - The effect depends entirely on the observer's Relationship score with the caster.
+35.   - If Observer is a Friend (Rel > 50): They gain the "Sad" emotion (Empathy).
+36.   - If Observer is a Rival (Rel < -50): They gain the "Happy" emotion (Schadenfreude) and their Entertainment spikes by +30.
+37. Cascade Potential: Medium. Can create polarized crowds where half the NPCs are weeping and the other half are laughing.
+38. 
+39. --- THE STAR EMOJI (⭐) ---
+40. Visual: A glowing gold star.
+41. Trigger: An NPC reads a Heroic article about themselves.
+42. AoE Effect (Awe):
+43.   - All NPCs in radius have their current Utility Action temporarily suspended for 3 seconds.
+44.   - A forced "LookAt" command is issued, making all nearby NPCs physically turn their heads to stare at the caster.
+45.   - This creates a massive photographic opportunity for the Player (a central subject surrounded by admiring onlookers).
+46. 
+47. --- THE FEAR EMOJI (😨) ---
+48. Visual: Shaking blue/white lines.
+49. Trigger: A sudden camera flash from a hostile Player, or a loud environmental noise.
+50. AoE Effect (Panic):
+51.   - All NPCs in radius inherit a +40 Fear Spike.
+52.   - This immediately triggers the "Fleeing" Aim for the entire crowd.
+53. Cascade Potential: Extreme. A single camera flash can cause a stampede as the panic spreads from NPC to NPC.
+54. 
+55. --- SYSTEMIC RULES FOR AOE ---
+56. - Line of Sight (LoS): Emojis ignore walls. If a Rage emoji happens inside a house, a passing NPC outside will still feel the stress. This simulates hearing the argument through the walls.
+57. - Diminishing Returns: If an NPC is hit by the same emoji type 3 times in 10 seconds, the effect is reduced by 50% each time (Desensitization).
+58. - Player Immunity: The Player's stats are not affected by emojis, but the Player's HUD will pick up the emotional state if they aim the Viewfinder at the caster.
+59. 
+60. --- IMPLEMENTATION IN THE C# ARCHITECTURE ---
+61. To support this, `HUDManager.SpawnEmojiReaction` must be heavily refactored.
+62. It must take a reference to the casting `NPCBrain`.
+63. It must execute `Physics.OverlapSphere` to find all nearby `NPCBrain` components.
+64. It must call `targetBrain.ProcessEmojiStimulus(EmojiType, CasterID)` on each target.
+65. This completely bridges the UI layer with the core behavioral simulation.
+66. 
+67. -
+68. -
+69. -
+70. -
+71. -
+72. -
+73. -
+74. -
+75. -
+76. -
+77. -
+78. -
+79. -
+80. -
+81. -
+82. -
+83. -
+84. -
+85. -
+86. -
+87. -
+88. -
+89. -
+90. -
+91. -
+92. -
+93. -
+94. -
+95. -
+96. -
+97. -
+98. -
+99. -
+100. - End of Emoji Mechanics Deep Analysis.

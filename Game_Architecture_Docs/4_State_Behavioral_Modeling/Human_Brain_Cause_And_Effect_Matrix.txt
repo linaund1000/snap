@@ -1,0 +1,104 @@
+HUMAN BRAIN: CAUSE AND EFFECT MATRIX (PART 2)
+=============================================
+1. The NPC Brain requires a rigorous, mathematical mapping of Cause (Stimulus) to Effect (Action Aim).
+2. The environment is constantly bombarding the NPC with Contextual Stimuli.
+3. This document maps exactly how the Appraisal Engine processes these stimuli.
+4. 
+5. --- STIMULUS: READING A SCANDALOUS NEWSPAPER ---
+6. CAUSE: The NPC interacts with the Newspaper Board, and the published story category is "Scandal".
+7. CONTEXT CHECK 1: Is the NPC the subject of the photo?
+8. If YES (Subject):
+9.   - Fear Spike: +100 (Ostracization)
+10.  - Social Drop: Set to 0.
+11.  - Resulting Emotion: Furious.
+12.  - New Aim: "Attack Newspaper Board" or "Flee Home".
+13. If NO (Bystander):
+14.   - Entertainment Spike: +80.
+15.  - Resulting Emotion: Surprised / Happy (Schadenfreude).
+16.  - New Aim: "Find Friends to Gossip".
+17. 
+18. --- STIMULUS: READING A HEROIC NEWSPAPER ---
+19. CAUSE: The published story category is "Heroic".
+20. CONTEXT CHECK 1: Is the NPC the subject?
+21. If YES:
+22.   - Social Connection Spike: +100.
+23.  - Resulting Emotion: Happy / Proud.
+24.  - New Aim: "Strut in Town Square" (Seek visibility).
+25. If NO:
+26.   - Entertainment Spike: +50.
+27.  - Relationship Modifier: +20 towards the Subject of the photo.
+28.  - Resulting Emotion: Happy.
+29.  - New Aim: "Wander".
+30. 
+31. --- STIMULUS: SUDDEN CAMERA FLASH ---
+32. CAUSE: The Player hits the Shutter button with Flash enabled within 10 meters of the NPC.
+33. APPRAISAL ROUTINE:
+34.   - Base Fear Spike: +40.
+35.   - Neuroticism Check: If Neuroticism > 0.7, Fear Spike = +80.
+36.   - Agreeableness Check: If Agreeableness < 0.3, instantly triggers Anger.
+37. RESULTING EMOTIONS: Fearful (if Neurotic), Angry (if Disagreeable), Neutral (if highly Resilient).
+38. NEW AIM (Fearful): "Flee to nearest cover".
+39. NEW AIM (Angry): "Turn and confront Player".
+40. 
+41. --- STIMULUS: IGNORED BY A FRIEND ---
+42. CAUSE: An NPC executes "Approach for Gossip" but the target's Autonomy is too low, causing the target to execute "Flee Crowd" instead.
+43. APPRAISAL ROUTINE:
+44.   - The approaching NPC's action fails.
+45.   - Social Connection Drop: -25 instantly (Rejection).
+46.   - Relationship Modifier: -5 towards the target NPC.
+47. RESULTING EMOTION: Sad (due to Social drop) or Angry (due to Relationship drop).
+48. NEW AIM: "Seek a bench to sit alone".
+49. 
+50. --- STIMULUS: THE RAIN (ENVIRONMENTAL) ---
+51. CAUSE: Global Weather Manager switches to "Rain".
+52. APPRAISAL ROUTINE:
+53.   - Continuous Drain: Autonomy drains at 2x speed while outdoors.
+54.   - Continuous Drain: Entertainment drops to 0 while outdoors.
+55. RESULTING EMOTION: Annoyed / Neutral.
+56. NEW AIM: "Seek Shelter" (High priority utility).
+57. 
+58. --- STIMULUS: TARGETED BY A RAGE (🤬) EMOJI ---
+59. CAUSE: An NPC is within the blast radius of another NPC's Rage emoji.
+60. APPRAISAL ROUTINE:
+61.   - Emotional Infection: The target must roll a Resilience check against the caster's Rage.
+62.   - Failure: Autonomy drops by -30 instantly.
+63. RESULTING EMOTION: Angry or Fearful.
+64. NEW AIM: "Argue back" (if Angry) or "Flee" (if Fearful).
+65. 
+66. --- STIMULUS: APPROACHED BY A PLAYER (HIGH RELATIONSHIP) ---
+67. CAUSE: Player walks within 3 meters. Relationship with Player > 50.
+68. APPRAISAL ROUTINE:
+69.   - Social Connection Spike: +20.
+70. RESULTING EMOTION: Happy.
+71. NEW AIM: "Stop and wave at Player".
+72. 
+73. --- STIMULUS: APPROACHED BY A PLAYER (LOW RELATIONSHIP) ---
+74. CAUSE: Player walks within 3 meters. Relationship with Player < -50.
+75. APPRAISAL ROUTINE:
+76.   - Fear Spike: +30.
+77. RESULTING EMOTION: Angry / Disgusted.
+78. NEW AIM: "Turn back and walk away rapidly".
+79. 
+80. --- CONTEXT MEMORY STREAM (THE LEDGER) ---
+81. Every single Cause and Effect is written to the `NPCMemoryStream`.
+82. The ledger stores objects of type `MemoryEvent(Timestamp, StimulusType, SourceID, ResultingEmotion)`.
+83. The Brain uses this ledger to answer the question: "Why am I feeling this way?"
+84. When the Target Inspector UI queries the Brain, the Brain checks the most recent MemoryEvent.
+85. If the most recent event is `(12:00, CameraFlash, Player, Angry)`,
+86. The UI will output Context: "Angry because the Player flashed a camera in my face at 12:00."
+87. This makes the simulation 100% transparent and perfectly legible to the player.
+88. 
+89. -
+90. -
+91. -
+92. -
+93. -
+94. -
+95. -
+96. -
+97. -
+98. -
+99. -
+100. -
+101. -
+102. - End of Cause and Effect Matrix Deep Analysis.

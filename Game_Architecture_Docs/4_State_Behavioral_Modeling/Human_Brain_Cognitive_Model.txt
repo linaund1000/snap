@@ -1,0 +1,56 @@
+HUMAN BRAIN COGNITIVE MODEL - DEEP ANALYSIS
+===========================================
+
+[1. CORE DESIRES, FEARS, AND EMOTIONS]
+- The NPC Brain is governed by deep physiological drives (Desires) and survival instincts (Fears).
+- EMOTIONS are the transient, visible reactions to how well these Desires and Fears are being managed.
+
+DESIRES (AIMS)
+- Social Connection: The drive to gossip, hug, and form bonds. High deficit leads to Sadness.
+- Entertainment: The drive to read news or witness events. High deficit leads to Boredom/Apathy.
+- Autonomy: The desire to be left alone (Introversion). High deficit leads to Anger.
+- Rest: The drive to replenish energy. High deficit leads to Sluggishness/Sadness.
+
+FEARS
+- Intrusive Surveillance: The fear of the Player's camera. Triggers Fleeing or Aggression.
+- Social Ostracization: The fear of being written about negatively in the Newspaper (Scandals).
+- Physical Danger: Fear triggered by sudden loud noises, flashes, or aggressive NPCs.
+
+[2. THE CAUSE AND EFFECT MATRIX]
+The following table outlines how environmental contexts effect the cognitive state.
+
+CONTEXT_STIMULUS          | SHIFTS_DESIRE       | SHIFTS_EMOTION | RESULTING_ACTION_AIM
+--------------------------|---------------------|----------------|--------------------------
+Reading a Scandal         | Increases Fear      | -> Angry       | Aim: Confront the target
+Reading a Heroic Story    | Satisfies Entertain | -> Happy       | Aim: Gossip with friends
+Camera Flash in Face      | Spikes Fear         | -> Fearful     | Aim: Flee the Player
+Ignored by a Friend       | Drops Social        | -> Sad         | Aim: Seek isolation / cry
+High Energy / Boredom     | Spikes Entertain    | -> Surprised   | Aim: Wander to Town Square
+Nighttime approaches      | Drops Energy        | -> Neutral     | Aim: Go home and sleep
+Targeted by Rage Emoji    | Spikes Fear/Anger   | -> Disgusted   | Aim: Argue back or Flee
+
+[3. UNPREDICTABLE HUMAN NATURE (THE CHAOS FACTOR)]
+- Humans are not perfect utility calculators. To simulate true "life", the brain includes a Chaos Multiplier.
+- The "Whim" System: Every evaluation cycle, there is a 5% chance an NPC will completely ignore their highest logical Utility Need.
+- Example: A highly introverted, tired NPC might suddenly experience a "Manic Whim" and sprint to the center of the town to socialize, overriding all logical parameters.
+- Hidden Grudges: A relationship score might be positive (+20), but a hidden boolean ("Holds Grudge") might cause an NPC to randomly sabotage or insult their friend.
+
+[4. EMOJI MECHANICAL EFFECTS (AOE INFLUENCE)]
+Emojis are no longer just visual popups. They are physical "Emotional Spells" cast into the world.
+When an NPC emits an emoji, it casts a spherical Raycast (AoE) that physically alters the Brain State of any NPC caught in the radius.
+
+EMOJI CAST | MECHANICAL EFFECT ON NEARBY OBSERVERS
+-----------|----------------------------------------------------
+🥰 (Love)  | Instantly satisfies 10% Social Desire for all nearby NPCs. Grants +2 Relationship to caster.
+🤬 (Rage)  | Spreads 'Tension'. Nearby NPCs gain +15 Introversion (Desire to leave) or catch the 'Angry' emotion.
+💔 (Heart) | Empathy trigger. Nearby Friends gain 'Sad' emotion; Nearby Rivals gain 'Happy' emotion (Schadenfreude).
+⭐ (Star)  | Awe trigger. Nearby NPCs pause their current action for 2 seconds to LookAt the caster.
+😨 (Fear)  | Panic cascade. Nearby NPCs inherit the Fear emotion and may also trigger Flee actions.
+
+[5. OBSERVATIONAL JOURNAL INTEGRATION]
+- The Journal will act as the "God-Eye" Diagnostic Tool.
+- When the Player opens the Journal and selects an NPC, they will see a live readout of:
+  Current Aim: "I want to isolate myself."
+  Current Emotion: "Sad."
+  Context: "Because Bob yelled a 🤬 at me."
+  Whim State: "Acting logically."

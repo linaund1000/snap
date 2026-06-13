@@ -1,0 +1,57 @@
+================================================================================
+UI COMMUNICATION: FINITE STATE MACHINE & TYPOGRAPHY STANDARDS
+================================================================================
+
+1. DESIGN AESTHETIC: "THE GLASS OF COMMUNICATION"
+--------------------------------------------------------------------------------
+The UI must be highly professional, utilizing a modern "Glassmorphism" aesthetic.
+It should feel like a clear, transparent lens into the simulation rather than 
+blocking it.
+
+[Aesthetic Rules]
+- Backgrounds: Translucent panels (Alpha 0.4 - 0.7) with background blur (Frosted Glass).
+- Borders: Subtle 1px white/silver borders with high transparency (Alpha 0.1).
+- Shadows: Soft, diffuse drop shadows to separate UI from the 3D world.
+- Animations: Smooth, micro-animations (0.15s ease-out) for all state transitions.
+
+2. TYPOGRAPHY: PROFESSIONAL FONT HIERARCHY
+--------------------------------------------------------------------------------
+Font Selection: 'Inter' or 'SF Pro' for absolute clarity and modern professionalism.
+Avoid playful or overly stylized fonts. 
+
+| Element           | Font Weight | Size (px) | Color / Opacity        | Purpose                               |
+|-------------------|-------------|-----------|------------------------|---------------------------------------|
+| Main Header (H1)  | Bold        | 32px      | Pure White (1.0)       | Major Screen Titles (e.g., "JOURNAL") |
+| Subheader (H2)    | Semi-Bold   | 24px      | White (0.8)            | Section Dividers                      |
+| Body Text (P)     | Regular     | 16px      | Light Gray (0.7)       | Descriptions, generic feedback logs   |
+| Micro Text        | Medium      | 12px      | Muted Gray (0.5)       | Timestamps, subtle hints              |
+| Alert / Critical  | Bold        | 16px      | Soft Red/Yellow (1.0)  | Errors, Rejections, Warnings          |
+| Success Context   | Semi-Bold   | 16px      | Mint Green (1.0)       | Successful actions, positive bonds    |
+
+
+3. FINITE STATE MACHINE: UI COMMUNICATION & FEEDBACK LOOPS
+--------------------------------------------------------------------------------
+The UI operates as an FSM to ensure the player is never overwhelmed, and always
+understands *why* the simulation is behaving the way it is.
+
+| CURRENT STATE         | TRIGGER EVENT                  | NEXT STATE            | UI FEEDBACK / GLASS COMMUNICATION                                           |
+|-----------------------|--------------------------------|-----------------------|-----------------------------------------------------------------------------|
+| [IDLE_EXPLORATION]    | Player looks at an NPC         | [TARGET_INSPECT]      | Fade-in 150ms. Glass panel shows NPC Name, current Emotion, and Top Need.   |
+| [TARGET_INSPECT]      | Player looks away              | [IDLE_EXPLORATION]    | Fade-out 150ms. Clear screen.                                               |
+| [TARGET_INSPECT]      | NPC rejects a Handshake        | [EVENT_REJECTION]     | Flash red border. Display "Rejected: Social Overload". Float 🙅‍♂️ Emoji.     |
+| [TARGET_INSPECT]      | NPC accepts a Handshake        | [EVENT_ACCEPTANCE]    | Flash green border. Display "Group Formed". Float 🥰 Emoji.                  |
+| [IDLE_EXPLORATION]    | Player equips Camera           | [VIEWFINDER_MODE]     | Screen edge vignette. Reticle appears. Hide standard inspection panels.     |
+| [VIEWFINDER_MODE]     | Subject enters Composition     | [COMPOSITION_LOCK]    | Reticle glows Yellow/Green. Text pop-up: "Subject Locked (Interest: 85%)"   |
+| [COMPOSITION_LOCK]    | Player takes Photo             | [PHOTO_REVIEW]        | Flash white (Shutter). Slide-in frosted glass panel with Photo Score.       |
+| [PHOTO_REVIEW]        | Player accepts/rejects Photo   | [IDLE_EXPLORATION]    | Slide-out panel. Resume time (TimeManager.ResumeGame()).                    |
+| [*ANY_STATE]          | Daily Phase Changes (Morning)  | [GLOBAL_NOTIFICATION] | Top-center glass banner drops down: "A New Day Begins" (Duration: 3s).      |
+| [*ANY_STATE]          | Newspaper Published            | [IMPACT_REPORT]       | Full screen blurred backdrop. Display shifts in town relationships.         |
+
+
+4. RESOLVING THE ROADMAP ISSUES
+--------------------------------------------------------------------------------
+By implementing this FSM, we resolve the following structural issues:
+- Missing_System_Feedback: The [TARGET_INSPECT] state natively exposes NPC needs.
+- Missing_Composition_Feedback: The [COMPOSITION_LOCK] state tells the player *why* a photo is good before they shoot.
+- Legacy_OnGUI_Usage: Emojis and feedback are integrated into the Canvas Glassmorphism system, deleting obsolete Unity 4 OnGUI calls.
+- Blocking_UI_Coupling: State transitions (like Opening the Journal) will emit Events to the EventBus rather than directly halting the GameManager.
