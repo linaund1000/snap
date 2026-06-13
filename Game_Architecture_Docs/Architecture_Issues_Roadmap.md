@@ -3,8 +3,8 @@
 PRIORITY | ISSUE_NAME | DESCRIPTION | REFERENCED_FILES | ACTION_PLAN
 ---|---|---|---|---
 High | Singleton_Coupling | Core managers tightly coupled; testing impossible. | GameManager.cs, TimeManager.cs | Remove Instance accessors. Implement IoC Container.
-High | Synchronous_IO_Stutter | Capturing photos blocks main thread, freezing game. | TakePictureUseCase.cs, CameraController.cs | Move Texture2D.EncodeToPNG to async Task.Run.
-High | Matrix_Garbage_Collection | String concatenation in relationship matrix causes memory spikes. | RelationshipMatrix.cs | Replace string keys with struct NPCPair.
+High | Synchronous_IO_Stutter | Capturing photos blocks main thread, freezing game. | TakePictureUseCase.cs, CameraController.cs | [DONE] Move Texture2D.EncodeToPNG to async Task.Run.
+High | Matrix_Garbage_Collection | String concatenation in relationship matrix causes memory spikes. | RelationshipMatrix.cs | [DONE] Replace string keys with struct NPCPair.
 High | Dual_Brain_Desynchronization | Enum state and Utility AI drift out of sync. | NPCController.cs, NPCActionPlanner.cs | Replace Enum FSM with GOAP or Behavior Tree.
 High | Missing_System_Feedback | Player cannot interrogate NPC state without clunky UI. | HUDManager.cs, JournalUI.cs | Implement Target Inspector UI via raycast.
 High | Unseeded_RNG_Logic | Random.Range used in Utility AI, destroying determinism. | NPCActionPlanner.cs, NewspaperManager.cs | Instantiate global PRNG with fixed master seed.

@@ -5,7 +5,7 @@ TODO & REFACTORING PRIORITIES - DEEP ANALYSIS
 3. Priority 1: Dismantle the Monolithic Singletons.
 4. The `GameManager.Instance`, `TimeManager.Instance`, and `NewspaperManager.Instance` references must be purged from all scripts.
 5. Todo: Implement an Inversion of Control (IoC) Container or a Service Locator to handle dependencies cleanly.
-6. Priority 2: Fix the O(N^2) Relationship Matrix Garbage Collection.
+6. [DONE] Priority 2: Fix the O(N^2) Relationship Matrix Garbage Collection.
 7. Currently, `RelationshipMatrix.cs` loops through every NPC pair using string concatenation (`npc.NpcId + "_to_" + other.NpcId`).
 8. Todo: Create a composite struct `public struct NPCPair : IEquatable<NPCPair> { public int A; public int B; }`.
 9. Todo: Convert the `Dictionary<string, int>` to `Dictionary<NPCPair, int>`. This eliminates GC allocation in the update loop.
@@ -16,7 +16,7 @@ TODO & REFACTORING PRIORITIES - DEEP ANALYSIS
 14. The player currently holds [Tab] to see a massive, unreadable scoreboard of relationships.
 15. Todo: Delete the Tab scoreboard.
 16. Todo: Add a raycast from the camera center. If it hits an NPC, display a localized UI canvas next to them showing their exact stats.
-17. Priority 5: Eliminate the Synchronous I/O Stutter.
+17. [DONE] Priority 5: Eliminate the Synchronous I/O Stutter.
 18. When the player takes a picture, `TakePictureUseCase.cs` blocks the main thread to encode a PNG and save it to disk.
 19. Todo: Move `Texture2D.EncodeToPNG()` and `File.WriteAllBytes()` to an asynchronous `Task.Run` background thread.
 20. Priority 6: Establish a Global Event Bus.

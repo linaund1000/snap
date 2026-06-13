@@ -9,12 +9,23 @@ namespace GPOyun.Core
     /// Tracks dynamic connections (friendship/rivalry) between each pair of NPC IDs.
     /// Symmetric and bidirectional. Clamped between -100 (Rivals) and +100 (Best Friends).
     /// </summary>
+    public struct NPCPair : System.IEquatable<NPCPair>
+    {
+        public int A;
+        public int B;
+        public NPCPair(int a, int b) { A = a; B = b; }
+        public bool Equals(NPCPair other) { return A == other.A && B == other.B; }
+        public override bool Equals(object obj) { return obj is NPCPair other && Equals(other); }
+        public override int GetHashCode() { return (A * 397) ^ B; }
+        public override string ToString() { return $"npc_{A}_to_{B}"; }
+    }
+
     public class RelationshipMatrix : MonoBehaviour
     {
         public static RelationshipMatrix Instance { get; private set; }
 
-        private readonly Dictionary<string, int> _relationsTable = new();
-        private readonly Dictionary<string, List<string>> _opinions = new();
+        private readonly Dictionary<NPCPair, int> _relationsTable = new();
+        private readonly Dictionary<NPCPair, List<string>> _opinions = new();
 
         private void Awake()
         {
@@ -29,39 +40,32 @@ namespace GPOyun.Core
             Debug.Log("[RelationshipMatrix] Initialized empty social network with opinions.");
         }
 
-        /// <summary>Formats a directional key. NPC A's opinion of NPC B.</summary>
-        private string FormatKey(int idA, int idB)
-        {
-            return $"npc_{idA}_to_npc_{idB}";
-        }
-
         public int GetRelationship(int idA, int idB)
         {
             if (idA == idB) return 100; // Self-relationship is perfect
-            string key = FormatKey(idA, idB);
+            var key = new NPCPair(idA, idB);
             return _relationsTable.TryGetValue(key, out int score) ? score : 0;
         }
 
         public void RecordOpinion(int idA, int idB, string opinion)
         {
             if (idA == idB) return;
-            string key = FormatKey(idA, idB); // Bi-directional shared memory for simplicity, or directional if we format differently. Let's do directional for thoughts!
-            string dirKey = $"npc_{idA}_thinks_of_{idB}";
-            if (!_opinions.ContainsKey(dirKey)) _opinions[dirKey] = new List<string>();
-            _opinions[dirKey].Add(opinion);
+            var key = new NPCPair(idA, idB);
+            if (!_opinions.ContainsKey(key)) _opinions[key] = new List<string>();
+            _opinions[key].Add(opinion);
             Debug.Log($"[Social Memory] NPC {idA} formed opinion of {idB}: '{opinion}'");
         }
 
         public List<string> GetOpinions(int idA, int idB)
         {
-            string dirKey = $"npc_{idA}_thinks_of_{idB}";
-            return _opinions.TryGetValue(dirKey, out var ops) ? ops : new List<string>();
+            var key = new NPCPair(idA, idB);
+            return _opinions.TryGetValue(key, out var ops) ? ops : new List<string>();
         }
 
         public void ModifyRelationship(int idA, int idB, int delta)
         {
             if (idA == idB) return;
-            string key = FormatKey(idA, idB);
+            var key = new NPCPair(idA, idB);
             int current = GetRelationship(idA, idB);
             int updated = Mathf.Clamp(current + delta, -100, 100);
             _relationsTable[key] = updated;

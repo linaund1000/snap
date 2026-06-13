@@ -68,12 +68,22 @@ namespace GPOyun.UseCases
             try
             {
                 byte[] bytes = tex.EncodeToPNG();
-                File.WriteAllBytes(fullPath, bytes);
-                Debug.Log($"[TakePictureUseCase] Capture written to: {fullPath}");
+                System.Threading.Tasks.Task.Run(() => 
+                {
+                    try 
+                    {
+                        File.WriteAllBytes(fullPath, bytes);
+                        Debug.Log($"[TakePictureUseCase] Capture written to: {fullPath}");
+                    }
+                    catch (Exception fileEx)
+                    {
+                        Debug.LogError($"[TakePictureUseCase] Background write failed: {fileEx.Message}");
+                    }
+                });
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[TakePictureUseCase] Failed to save PNG: {ex.Message}");
+                Debug.LogError($"[TakePictureUseCase] Encode to PNG failed: {ex.Message}");
             }
 
             PhotoData data = new PhotoData
