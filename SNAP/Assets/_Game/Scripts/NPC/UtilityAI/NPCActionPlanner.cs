@@ -31,8 +31,8 @@ namespace GPOyun.NPC.UtilityAI
 
         private void Start()
         {
-            // Give each NPC a random start offset so their FSMs don't evaluate on the exact same frame!
-            _evaluationTimer = Random.Range(0f, _evaluationInterval);
+            // Give each NPC a deterministic start offset based on their ID to prevent evaluation frame spikes
+            _evaluationTimer = (_controller.NpcId * 0.1f) % _evaluationInterval;
         }
 
         private void Update()

@@ -47,9 +47,7 @@ namespace GPOyun.NPC
         // Internal
         private Vector3  _homePosition;
         public Vector3 homePosition => _homePosition;
-        private Vector3  _targetPosition;
         private Animator _animator;
-        private Coroutine _reactCoroutine;
         private NewsPublishedData _pendingNews;
         private bool _hasReadTodayNews;
         private PantomimeGestures _gestures;
@@ -113,12 +111,10 @@ namespace GPOyun.NPC
             if (result.NewEmotion != currentEmotion)
             {
                 currentEmotion = result.NewEmotion;
-                // If angry, maybe transition state
                 if (currentEmotion == EmotionType.Angry)
                 {
-                    currentState = NPCState.Reacting;
                     TriggerReaction("🤬", VisualUtils.Terracotta);
-                    StartCoroutine(ResumeAutonomyAfterPose(3f));
+                    if (_actionPlanner != null) _actionPlanner.ForceReevaluate();
                 }
             }
 
@@ -151,7 +147,7 @@ namespace GPOyun.NPC
 
         // ─── Movement ─────────────────────────────────────────────────────
 
-        // ─── State Machine ────────────────────────────────────────────────
+        // ─── State Machine (Driven entirely by Utility AI now) ────────────
 
         public void EnterState(NPCState newState)
         {
@@ -169,17 +165,6 @@ namespace GPOyun.NPC
                     if (boardPosition != null)
                         transform.rotation = Quaternion.LookRotation(boardPosition.position - transform.position);
                     ProcessReadNews();
-                    if (_reactCoroutine != null) StopCoroutine(_reactCoroutine);
-                    _reactCoroutine = StartCoroutine(ReactRoutine());
-                    break;
-
-                case NPCState.WalkingHome:
-                    _targetPosition = _homePosition;
-                    if (_occupiedBench != null)
-                    {
-                        _occupiedBench.Vacate();
-                        _occupiedBench = null;
-                    }
                     break;
 
                 case NPCState.Idle:
@@ -200,16 +185,6 @@ namespace GPOyun.NPC
             }
         }
 
-        // ─── Coroutines ───────────────────────────────────────────────────
-
-        private IEnumerator ReactRoutine()
-        {
-            currentState = NPCState.Reacting;
-            yield return new WaitForSeconds(Random.Range(3f, 7f)); // variable react time
-            if (currentState == NPCState.Reacting)
-                EnterState(NPCState.WalkingHome);
-        }
-
         // ─── External Events ──────────────────────────────────────────────
 
         public void OnPhaseChanged(DayPhase newPhase)
@@ -218,11 +193,6 @@ namespace GPOyun.NPC
             {
                 case DayPhase.Morning:
                     _hasReadTodayNews = false;
-                    if (_occupiedBench != null)
-                    {
-                        _occupiedBench.Vacate();
-                        _occupiedBench = null;
-                    }
                     if (_pendingNews != null && boardPosition != null)
                     {
                         _needs.HasPendingNews = true;
@@ -359,53 +329,6 @@ namespace GPOyun.NPC
             }
         }
 
-        private IEnumerator PlayerProximityCheckRoutine()
-        {
-            while (true)
-            {
-                yield return new WaitForSeconds(Random.Range(2.0f, 3.5f));
-
-                if (currentState == NPCState.Sitting || currentState == NPCState.Reading || currentState == NPCState.Socializing || currentState == NPCState.Reacting || currentState == NPCState.Fleeing)
-                    continue;
-
-                // Find player in scene
-                var player = FindAnyObjectByType<Player.PlayerController>();
-                if (player == null) continue;
-
-                float dist = Vector3.Distance(transform.position, player.transform.position);
-
-                if (dist < 5.0f)
-                {
-                    // Face player
-                    Vector3 lookPos = new Vector3(player.transform.position.x, transform.position.y, player.transform.position.z);
-                    if (Vector3.Distance(transform.position, lookPos) > 0.1f)
-                    {
-                        transform.rotation = Quaternion.LookRotation(lookPos - transform.position);
-                    }
-
-                    if (relationshipWithPlayer >= 50)
-                    {
-                        // Friendly: wave and walk towards/follow player!
-                        
-                        currentState = NPCState.Wandering;
-                        _targetPosition = player.transform.position + Random.insideUnitSphere * 1.5f;
-                        _targetPosition.y = transform.position.y;
-                        
-                        TriggerReaction("🥰", new Color(1f, 0.4f, 0.6f));
-                        yield return new WaitForSeconds(Random.Range(2.5f, 4.0f));
-                    }
-                    else if (relationshipWithPlayer <= -50)
-                    {
-                        // Hostile: flee away!
-                        
-                        _needs.IsPlayerHostile = true;
-                        _needs.IsPlayerNearby = true;
-                        if (_actionPlanner != null) _actionPlanner.ForceReevaluate();
-                    }
-                }
-            }
-        }
-
         public void OnPhotographedByPlayer()
         {
             // Face player
@@ -419,9 +342,6 @@ namespace GPOyun.NPC
                 }
             }
 
-            // Pose/freeze briefly
-            currentState = NPCState.Reacting;
-            
             if (relationshipWithPlayer >= 50)
             {
                 relationshipWithPlayer = Mathf.Clamp(relationshipWithPlayer + 15, -100, 100);
@@ -431,22 +351,15 @@ namespace GPOyun.NPC
             {
                 relationshipWithPlayer = Mathf.Clamp(relationshipWithPlayer - 10, -100, 100);
                 TriggerReaction("🤬", VisualUtils.Terracotta);
+                
+                _needs.IsPlayerHostile = true;
+                _needs.IsPlayerNearby = true;
+                if (_actionPlanner != null) _actionPlanner.ForceReevaluate();
             }
             else
             {
                 relationshipWithPlayer = Mathf.Clamp(relationshipWithPlayer + 10, -100, 100);
                 TriggerReaction("⭐", new Color(1f, 0.85f, 0.2f));
-            }
-
-            StartCoroutine(ResumeAutonomyAfterPose(Random.Range(2.0f, 3.5f)));
-        }
-
-        private IEnumerator ResumeAutonomyAfterPose(float delay)
-        {
-            yield return new WaitForSeconds(delay);
-            if (currentState == NPCState.Reacting)
-            {
-                currentState = NPCState.Idle;
             }
         }
     }
