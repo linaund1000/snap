@@ -1,0 +1,102 @@
+CURRENT ARCHITECTURE - DEEP ANALYSIS
+====================================
+1. The Current Architecture of GPOyun relies on a highly coupled Monolithic Singleton design.
+2. At the core, `GameManager`, `TimeManager`, `NewspaperManager`, and `HUDManager` are all Singletons accessible globally.
+3. While this makes rapid prototyping easy, it creates a rigid structure that is impossible to unit test.
+4. You cannot test `NewspaperManager` without initializing `GameManager`, `TimeManager`, and `RelationshipMatrix`.
+5. This tight coupling means any change in the TimeManager's phase logic can instantly break the NewspaperManager's publish cycle.
+6. To solve this, the architecture must transition to Inversion of Control (IoC) or a Service Locator pattern.
+7. Managers should implement interfaces (e.g., `ITimeService`, `INewsService`).
+8. A central `Bootstrap` script should instantiate these services and inject them into dependent classes via constructors or Init() methods.
+9. The data layer is currently entangled with the logic layer.
+10. `RelationshipMatrix` acts as both the database holding the integers and the logic engine mutating them.
+11. The architecture needs a strict Separation of Concerns (SoC).
+12. `RelationshipDatabase` should hold the data (a 2D array or adjacency list).
+13. `SocialLogicEngine` should process the events and update the database.
+14. The presentation layer (UI) directly accesses the data layer.
+15. `JournalUI` reads directly from `RelationshipMatrix.Instance`.
+16. This violates Model-View-Controller (MVC) paradigms. The UI should only listen for `OnRelationshipChanged` events.
+17. The event system in the current architecture is practically non-existent.
+18. Classes call each other directly: `RelationshipMatrix.Instance.ProcessPublishingEvent()`.
+19. If `RelationshipMatrix` is disabled or destroyed, `NewspaperManager` throws a NullReferenceException and crashes the morning phase.
+20. A robust Pub/Sub (Publish/Subscribe) Event Bus is missing.
+21. The Event Bus would allow `NewspaperManager` to fire a `NewsPublishedEvent`. 
+22. `RelationshipMatrix` would independently subscribe to that event, removing the hard dependency.
+23. State persistence is entirely missing from the current architecture.
+24. There is no mechanism to serialize the simulation state to JSON or a binary format.
+25. Every time the game stops, the social matrix resets.
+26. An `ISaveable` interface must be integrated into all data classes (`NPCNeeds`, `RelationshipMatrix`, `PhotoData`).
+27. A `SaveManager` should aggregate all `ISaveable` objects and write them to `Application.persistentDataPath`.
+28. The current architecture handles rendering and simulation on the same thread inside `Update()`.
+29. Because the simulation is heavy (O(N^2) social calculations), it causes frame drops on the main thread.
+30. The architecture must move heavy mathematical evaluations (like Matrix shifting) to C# Job System and Burst Compiler.
+31. Alternatively, simple `Task.Run` async calls can be used to offload data processing to worker threads.
+32. The input architecture attempts to use the Unity New Input System but falls back to legacy polling in several scripts.
+33. `CameraController` checking `Keyboard.current` directly breaks multi-platform support.
+34. The architecture must standardize on an `InputReader` ScriptableObject that broadcasts UnityEvents when buttons are pressed.
+35. The `UtilityAI` namespace is structurally sound but isolated.
+36. It calculates utility curves dynamically but has no authority to enforce its decisions on the `NPCController` FSM.
+37. The architecture must grant the Utility AI exclusive control over the NPC's `NavMeshAgent` and `Animator`.
+38. Procedural generation in `TownSquareBuilder` is hardcoded, meaning designers cannot iterate on the map.
+39. The architecture should replace this with a grid-based Prefab spawner reading from a JSON layout file or a ScriptableObject map.
+40. The `CameraSystem` handles its own memory management for RenderTextures but lacks strict `Try/Finally` blocks.
+41. If `EncodeToPNG` throws an error, the RenderTexture is never released, causing a VRAM leak.
+42. The overarching architectural philosophy must shift from "Scripts driving Objects" to "Data driving Systems".
+43. Entity Component System (ECS) principles could be applied to the NPCs to maximize performance.
+44. If transitioning to ECS is too drastic, a strict MVC pattern is the absolute minimum requirement for long-term stability.
+45. -
+46. -
+47. -
+48. -
+49. -
+50. -
+51. -
+52. -
+53. -
+54. -
+55. -
+56. -
+57. -
+58. -
+59. -
+60. -
+61. -
+62. -
+63. -
+64. -
+65. -
+66. -
+67. -
+68. -
+69. -
+70. -
+71. -
+72. -
+73. -
+74. -
+75. -
+76. -
+77. -
+78. -
+79. -
+80. -
+81. -
+82. -
+83. -
+84. -
+85. -
+86. -
+87. -
+88. -
+89. -
+90. -
+91. -
+92. -
+93. -
+94. -
+95. -
+96. -
+97. -
+98. -
+99. -
+100. - End of Current Architecture deep analysis.

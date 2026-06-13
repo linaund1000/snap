@@ -1,0 +1,106 @@
+USE CASE DIAGRAM - DEEP ANALYSIS
+================================
+1. The Use Case Diagram maps the boundaries and interactions between external actors and internal systems.
+2. In GPOyun, the actors are: The Player, The System Clock (TimeManager), and The NPCs.
+3. Diagram Node 1: Player -> (Aim Camera).
+4. This node is tightly bound to `CameraController.cs` and `ViewfinderManager.cs`.
+5. The architectural flaw here is that the Viewfinder UI is driven directly by hardware input polling (`Keyboard.current.cKey`).
+6. It bypasses the Unity Input System Action mapping, rendering gamepad support impossible without a rewrite.
+7. Diagram Node 2: Player -> (Capture Photo).
+8. This node triggers `TakePictureUseCase.Execute()`.
+9. The execution boundary is flawed. When the player captures a photo, it synchronously writes a PNG to the disk.
+10. This crosses the boundary from Application Space to OS File System Space synchronously, freezing the game loop.
+11. Diagram Node 3: System Clock -> (Advance Day Phase).
+12. `TimeManager.cs` owns this node. It divides 120 seconds into 5 phases.
+13. The architectural flaw is that the System Clock forces state changes on other systems via direct method calls (`NewspaperManager.Instance.OnMorningArrived()`).
+14. A true use case boundary requires an Event Bus so the clock merely announces the time, and systems react independently.
+15. Diagram Node 4: System Clock -> (Publish Morning Newspaper).
+16. This node represents the most intense CPU spike in the game.
+17. Publishing the news triggers an O(N^2) evaluation loop inside `RelationshipMatrix.cs`.
+18. This node must be refactored to distribute its execution across multiple frames (Time-Slicing) or offloaded to a Background Thread.
+19. Diagram Node 5: NPC -> (Read Newspaper).
+20. This node requires spatial awareness. The NPC must pathfind to the physical newspaper board in the town square.
+21. However, the NavMesh configuration lacks dynamic carving, meaning NPCs will push through each other to reach the exact center coordinate.
+22. Diagram Node 6: NPC -> (Evaluate News Content).
+23. `AppraisalEngine.cs` handles this. It evaluates the news against `NPCPersonalityData`.
+24. The flaw is that `AppraisalEngine` uses hardcoded magic numbers (+10, -30) instead of data-driven curves.
+25. Diagram Node 7: NPC -> (Socialize / Gossip).
+26. Handled by the Utility AI's `SocializeAction`.
+27. The boundary failure here is that Gossip does not trigger systemic UI feedback. The player never sees the gossip happen.
+28. Diagram Node 8: NPC -> (React to Camera Flash).
+29. `NPCSensoryMatrix` detects the flash.
+30. The architectural failure is the "Dual-Brain" desynchronization. The sensory matrix cannot interrupt the active Utility AI action, so the NPC ignores the flash physically while logging it mathematically.
+31. Diagram Node 9: Player -> (View Relationship Overlay).
+32. Bound to the [Tab] key in `HUDManager.cs`.
+33. The execution is disastrous. It draws 100 relationship connections directly onto the screen, causing cognitive overload.
+34. The use case must be redefined from "View All" to "Inspect Target" (Raycast to NPC -> Show Local UI).
+35. Diagram Node 10: Player -> (Review Journal).
+36. Bound to the [J] key in `JournalUI.cs`.
+37. This use case violates simulation principles by executing `GameManager.PauseGame()`.
+38. The Journal should be a live data stream, not a pause menu.
+39. The most glaring omission in the Use Case Diagram is the lack of Editorial Control.
+40. Player -> (Select Headline) and Player -> (Choose Front Page Photo) do not exist.
+41. The system randomly selects the best photo and applies a random category.
+42. This severs the cybernetic loop. If the player cannot control the output, they are not a participant in the simulation; they are merely a photographer.
+43. Another missing node is Player -> (Save/Load Game).
+44. The system is ephemeral. Closing the executable wipes the Relationship Matrix.
+45. To elevate this from a prototype to a game, serialization interfaces (`ISaveable`) must be added to all data nodes.
+46. The interaction between Player and System is entirely visual. There are no Audio Use Cases.
+47. Player -> (Hear Gossip Chime) or Player -> (Hear Shutter Click) are vital for game feel but entirely absent from the architecture.
+48. The Use Case Diagram proves that the game has a strong foundation of verbs (Capture, Publish, React).
+49. However, the execution of these verbs is heavily bottlenecked by monolithic singletons and synchronous blocking operations.
+50. Refactoring must strictly adhere to decoupling these nodes via an Event Bus.
+51. -
+52. -
+53. -
+54. -
+55. -
+56. -
+57. -
+58. -
+59. -
+60. -
+61. -
+62. -
+63. -
+64. -
+65. -
+66. -
+67. -
+68. -
+69. -
+70. -
+71. -
+72. -
+73. -
+74. -
+75. -
+76. -
+77. -
+78. -
+79. -
+80. -
+81. -
+82. -
+83. -
+84. -
+85. -
+86. -
+87. -
+88. -
+89. -
+90. -
+91. -
+92. -
+93. -
+94. -
+95. -
+96. -
+97. -
+98. -
+99. -
+100. - End of Use Case Diagram deep analysis.
+
+[CURRENT STATUS & CRITIQUE]
+Status: Incomplete System Feedback.
+Critique: The System Feedback loop is broken. The user takes a picture, but there is no mechanism to tell the user *why* an NPC reacted a certain way to the news. We need a way for the user to interrogate the system.

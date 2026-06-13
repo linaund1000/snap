@@ -1,0 +1,106 @@
+FINITE STATE MACHINE OF OBJECTS - DEEP ANALYSIS
+===============================================
+1. The Finite State Machine (FSM) of objects in GPOyun is fundamentally fractured into two competing paradigms.
+2. The core of an NPC's behavior is governed by `NPCController.cs`, which maintains a strict Enum-based `GameState` (Idle, Wandering, WalkingToBoard, Reading, Reacting, WalkingHome).
+3. Simultaneously, `NPCActionPlanner.cs` runs a Utility AI system that continuously evaluates and queues `NPCAction` classes (e.g., `MoveAction`, `SocializeAction`, `GroupHangoutAction`).
+4. This creates "Dual-Brain Desynchronization": The FSM and the Utility AI are entirely unaware of each other's execution states.
+5. Example of Failure: The Utility AI calculates that `SocialDesire` is high and triggers `GroupHangoutAction`. 
+6. `GroupHangoutAction` forces the NPC to move to a destination.
+7. However, the Enum FSM inside `NPCController` might still read `Idle` because the FSM transition (`ChangeState`) was never explicitly called.
+8. This desynchronization causes severe animation bugs. An NPC can be physically translating across the NavMesh while their Animator plays an Idle or Sitting animation.
+9. To fix this, the architecture must transition entirely to a Goal-Oriented Action Planner (GOAP) or a Behavior Tree, completely deprecating the Enum FSM.
+10. The `NPCController` should be a "dumb" executor of the active `NPCAction`, exposing only `PlayAnimation(string state)` and `MoveTo(Vector3 pos)`.
+11. The current state transitions are polled in the `Update()` loop rather than being event-driven.
+12. For instance, `if (Vector3.Distance(transform.position, destination) < stopDistance)` is evaluated every frame.
+13. Instead, the architecture should subscribe to `NavMeshAgent` callbacks or utilize Coroutines (e.g., `yield return WaitUntilReached(destination)`).
+14. Dead ends exist in the FSM transition table. 
+15. For example, the `WalkingHome` state is triggered when `TimeManager` enters the `Night` phase.
+16. The NPC correctly paths to their home coordinate and enters the `Idle` state inside the house.
+17. However, when the `Morning` phase arrives, there is no structural hook to flush the FSM and re-trigger morning behaviors (like `WalkingToBoard`).
+18. As a result, NPCs remain trapped inside their houses indefinitely after the first day cycle completes.
+19. The Utility AI evaluation loop (`EvaluateNeeds()`) occurs inside `FixedUpdate` or `Update` on staggered, randomized timers.
+20. `InvokeRepeating` or Coroutines with `Random.Range` are used to prevent 10 NPCs from evaluating actions on the same frame.
+21. This randomness destroys simulation determinism. If the game is saved and loaded, the timing of AI evaluations will differ, leading to butterfly-effect divergences.
+22. The solution is an AI Director Manager that explicitly schedules evaluation ticks for all NPCs sequentially across fixed simulation steps.
+23. The `AppraisalEngine` interacts poorly with the FSM. 
+24. When a stimulus (like a camera flash) triggers an appraisal, the engine simply calculates an emotional shift.
+25. It does not generate an `InterruptAction` to forcibly halt the NPC's current Utility AI task.
+26. If an NPC is currently evaluating a `SocializeAction`, they will continue to gossip even if they were just terrified by a camera flash.
+27. The FSM lacks a concept of hierarchical priority (HFSM). A 'React' state must structurally supersede and pause all baseline 'Needs' states.
+28. `SocialGroupManager` attempts to create linked FSM states among multiple NPCs (Leader-Follower dynamics).
+29. A Leader executes `GroupHangoutAction` and attempts to force Followers to execute the same action.
+30. However, because Followers do not sync their Animator states to the Leader, the hangout looks like a scattered crowd facing random directions.
+31. The FSM must support "Target LookAt" tracking so that NPCs explicitly face their social targets when interacting.
+32. Emotional state (`Valence` and `Arousal`) is tracked continuously in float values but mapped to discrete Enum categories (`Happy`, `Sad`, `Angry`).
+33. The mapping is brittle: `if (valence > 0 && arousal > 0) return Emotion.Happy;`
+34. This simplification ignores complex social states like "Anxious" (low valence, high arousal) or "Bored" (neutral valence, low arousal).
+35. The transition between these emotional Enum states is instantaneous; there is no blending mechanism for the psychological decay over time.
+36. This results in NPCs snapping instantly from Furious to Joyful if a single high-impact news story is published.
+37. The Memory sub-FSM (`NPCMemoryStream`) acts as a passive ledger. 
+38. Actions add string entries like "Saw a camera flash" to the ledger.
+39. However, the FSM never queries this ledger to drive future state transitions. Memory is currently a write-only system with zero behavioral impact.
+40. True behavioral modeling requires that previous states (Memory) directly influence the utility curve of future actions (e.g., Grudge multiplier).
+41. The `MoveAction` base class abstracts NavMesh pathing, which is good architecture, but it lacks failure states.
+42. If the NavMeshAgent gets stuck on geometry, the `MoveAction` `_isExecuting` flag remains `true` forever.
+43. The FSM never times out. Every state that relies on physics movement must have a failsafe timeout `if (Time.time > startTime + timeout) FailAction();`.
+44. Currently, stuck NPCs will block the execution of the entire Utility AI queue permanently.
+45. The FSM logic for `ReadNews` completely ignores the physical environment.
+46. If the Newspaper Board is surrounded by 5 NPCs, the 6th NPC will endlessly push against the crowd trying to reach the exact center coordinate.
+47. The state must transition from `WalkingToBoard` to `Reading` if the NPC is *within a visible radius* of the board, not just touching the exact transform point.
+48. In conclusion, the FSM of objects in GPOyun is a chaotic mix of legacy explicit states and incomplete Utility AI.
+49. The absolute priority for refactoring is to establish a singular Source of Truth for NPC behavior.
+50. Either the Utility AI completely owns the execution context, or a strict HFSM completely owns it.
+51. -
+52. -
+53. -
+54. -
+55. -
+56. -
+57. -
+58. -
+59. -
+60. -
+61. -
+62. -
+63. -
+64. -
+65. -
+66. -
+67. -
+68. -
+69. -
+70. -
+71. -
+72. -
+73. -
+74. -
+75. -
+76. -
+77. -
+78. -
+79. -
+80. -
+81. -
+82. -
+83. -
+84. -
+85. -
+86. -
+87. -
+88. -
+89. -
+90. -
+91. -
+92. -
+93. -
+94. -
+95. -
+96. -
+97. -
+98. -
+99. -
+100. - End of FSM Objects deep analysis.
+
+[CURRENT STATUS & CRITIQUE]
+Status: Conflicting State Machines.
+Critique: The FSM overlaps with Utility AI. Utility AI sets `_activeAction` but `NPCController` has its own `currentState` enum. They often drift out of sync, causing broken animations. Dead ends like `WalkingHome` trap NPCs indefinitely.

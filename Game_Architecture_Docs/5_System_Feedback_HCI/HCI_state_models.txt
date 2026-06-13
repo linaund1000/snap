@@ -1,0 +1,106 @@
+HCI STATE MODELS & SYSTEM FEEDBACK - DEEP ANALYSIS
+==================================================
+1. Human-Computer Interaction (HCI) in a simulation game is the only bridge between complex mathematics and player comprehension.
+2. In GPOyun, the core loop is cybernetic: Player Stimulus -> System Math -> UI Feedback -> Player Reaction.
+3. Currently, the HCI state models are deeply flawed, failing to communicate the nuances of the `RelationshipMatrix` and `AppraisalEngine`.
+4. Issue 1: Floating Emoji System (`EmojiReaction` in `HUDManager.cs`).
+5. When an NPC reacts to news or a flash, the system spawns a floating emoji above their head using `OnGUI()`.
+6. This emoji fades after 1.5 seconds. If the player is looking the other way, the feedback is lost permanently.
+7. Furthermore, `OnGUI()` is deprecated, causing massive CPU overhead and resolution-scaling visual bugs.
+8. The HCI fix: Replace floating OnGUI text with a world-space `Canvas` attached to the NPC.
+9. More importantly, critical reactions must be logged in a persistent "Global Gossip Feed" pinned to the corner of the screen.
+10. This feed would explicitly state the math: *"Leo is furious! Opinion of Zoe dropped by 30."*
+11. Issue 2: The Viewfinder Overlay State.
+12. When the player presses 'C', `CameraController.cs` zooms the FOV and toggles a UI reticle.
+13. However, the system provides zero feedback regarding the `CompositionScore` calculated by `PhotoScorer`.
+14. The player does not know if they are capturing a "Masterpiece" or "Garbage" until after the fact.
+15. The HCI fix: The Viewfinder UI must glow green or display a dynamic percentage (e.g., "Composition: 85%") while aiming.
+16. Issue 3: The Tab-Key Relationship Overlay (`HUDManager.cs`).
+17. The current scoreboard is an Esport-style grid rendered directly over the center of the screen.
+18. It is visually overwhelming and blocks the player from observing the physical simulation happening behind it.
+19. It also dumps the entire 10x10 relationship matrix simultaneously, resulting in severe cognitive overload.
+20. The HCI fix: Delete the global scoreboard. Replace it with a "Target Inspector".
+21. When the Viewfinder is aimed directly at a specific NPC, a clean, targeted UI panel should fade in adjacent to them.
+22. This panel should only display *their* active emotion, *their* relationship with the player, and *their* closest friend/rival.
+23. Issue 4: The Journal UI (`JournalUI.cs`).
+24. Pressing 'J' opens an observational ledger. Crucially, opening the Journal directly invokes `GameManager.Instance.PauseGame()`.
+25. This creates jarring HCI states where looking at data freezes the world. A simulation should allow real-time observation.
+26. The Journal must become a transparent, non-blocking overlay, completely decoupled from the `TimeManager` timescale.
+27. Issue 5: Silent Failures in Player Verbs.
+28. If the player takes a photo of an empty wall, the `TakePictureUseCase` captures an "Environmental" shot with a default score of 30.
+29. The UI does not flash, there is no error sound, and no text pops up to say "No Subject Detected."
+30. Without negative feedback, the player assumes the system is functioning and expects the environment shot to impact the simulation.
+31. When it predictably fails to shift any NPC relationships, the player interprets the game as broken.
+32. The HCI fix: Implement strict negative feedback. A red "Failed: Subject Missing" notification and an error buzzer sound must play.
+33. Issue 6: Asynchronous Event Misalignment.
+34. When `NewspaperManager` publishes the morning paper, the relationships update instantly in the data layer.
+35. However, the NPCs take 10-15 seconds to pathfind to the news board to physically read the paper.
+36. This means the UI relationship matrix shifts *before* the NPC has actually learned the news.
+37. This disconnect shatters the illusion of the simulation.
+38. The HCI fix: Delay the `RelationshipMatrix.UpdateScore()` execution until the exact moment the NPC's `ReadNews` animation triggers.
+39. Issue 7: Lack of Audio Feedback.
+40. The current HCI state model relies entirely on visual text. There are no systemic audio cues.
+41. Audio is a critical channel for cybernetic feedback. A positive relationship shift should play a major-chord chime; a negative shift should play a minor-chord sting.
+42. A dedicated `AudioManager` listening to an `EventBus` is required to spatialize these sounds relative to the triggering NPC.
+43. Issue 8: Newspaper Publication Feedback.
+44. When the Morning phase hits, the newspaper is generated, but the player has no interaction with it.
+45. The player cannot see the front-page photo they took on an actual newspaper texture.
+46. The HCI fix: Implement a `ComposeEditorialUseCase` UI where the player *selects* the photo and *types* the headline before the phase ends.
+47. This bridges the gap between player input and systemic output.
+48. In conclusion, the current HCI is fundamentally failing its purpose: communication.
+49. The system acts like a black box, mutating variables invisibly and expecting the player to decipher floating emojis.
+50. By implementing a Notification Feed, a Target Inspector, and explicit Audio Cues, the HCI will finally make the deterministic math legible and engaging.
+51. -
+52. -
+53. -
+54. -
+55. -
+56. -
+57. -
+58. -
+59. -
+60. -
+61. -
+62. -
+63. -
+64. -
+65. -
+66. -
+67. -
+68. -
+69. -
+70. -
+71. -
+72. -
+73. -
+74. -
+75. -
+76. -
+77. -
+78. -
+79. -
+80. -
+81. -
+82. -
+83. -
+84. -
+85. -
+86. -
+87. -
+88. -
+89. -
+90. -
+91. -
+92. -
+93. -
+94. -
+95. -
+96. -
+97. -
+98. -
+99. -
+100. - End of HCI State Models analysis.
+
+[CURRENT STATUS & CRITIQUE]
+Status: Disjointed UI States.
+Critique: The UI states overlap improperly. The HUD overlay overlaps with the Photo Review modal, causing visual bugs and input conflicts. System feedback is meant for communication with the user, but right now it fails to explain "why" actions occur.

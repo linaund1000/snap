@@ -1,0 +1,102 @@
+SCENARIOS FOR GAME - DEEP ANALYSIS
+==================================
+1. Game scenarios represent the high-level narrative and systemic arcs the player can experience.
+2. Currently, the scenarios in GPOyun are intended to be emergent, but the architecture restricts them to hardcoded paths.
+3. Scenario 1: The Gossip Catalyst.
+4. Intent: The player photographs a secret meeting, publishes it, and the town turns on the individuals.
+5. Reality: The system cannot recognize "secret meetings." It only recognizes `PhotoSubject` IDs.
+6. The `NewspaperManager` randomly assigns the "Scandal" category to the photo.
+7. Thus, the town turns on an individual completely at random, rather than based on the player's intentional timing.
+8. To fix Scenario 1, the `PhotoData` must capture the *Action* the NPC was performing (e.g., `SocializeAction` with a rival).
+9. Scenario 2: The Hero's Rise.
+10. Intent: The player captures an NPC doing a good deed; their relationship scores max out.
+11. Reality: The Utility AI currently contains no "Good Deed" actions.
+12. NPCs only possess selfish actions (`Eat`, `Sleep`, `ReadNews`, `Socialize`).
+13. To fix Scenario 2, altruistic actions (e.g., `GiveGiftAction`, `HelpFallenAction`) must be implemented in the Utility AI.
+14. Scenario 3: The Group Hangout Dynamics.
+15. Intent: A cluster of friends gathers at the fountain, creating a highly dense social event to photograph.
+16. Reality: `GroupHangoutAction` forces followers to lerp to a coordinate.
+17. They do not face each other, nor do their animations synchronize.
+18. To fix Scenario 3, `SocialGroupManager` needs a formation handler (e.g., Circular Formation) and IK LookAt targets.
+19. Scenario 4: The Photo Bomb.
+20. Intent: The player tries to photograph a subject, but a rival jumps into the frame to ruin it.
+21. Reality: The `PhotoScorer` algorithm evaluates the exact center of the screen via a single raycast.
+22. It cannot detect a secondary NPC ruining the shot.
+23. To fix Scenario 4, the camera system must evaluate all `PhotoSubject` bounds within the frustum and penalize scores for overlapping unwanted subjects.
+24. Scenario 5: The Ripple Effect (Chain Reactions).
+25. Intent: NPC A hates NPC B. NPC A reads a good article about NPC B and becomes angry at the newspaper.
+26. Reality: The `AppraisalEngine` only modifies the direct relationship with the photo subject.
+27. It lacks second-order relational shifts.
+28. To fix Scenario 5, the math must loop through the reader's friends: "If my friend hates you, and the news praises you, I hate the news."
+29. Scenario 6: NPC Fleeing from Flash.
+30. Intent: Neurotic NPCs run away when a camera flashes in their face.
+31. Reality: The `NPCSensoryMatrix` detects the flash, but the FSM cannot interrupt the active Utility AI action.
+32. The NPC will stand still, process the "Flee" emotion internally, and continue eating.
+33. To fix Scenario 6, the `ReactAction` must have an absolute override priority, immediately canceling the current pathfinding target.
+34. Scenario 7: The Silent Town (Failure State).
+35. Intent: If the player stops taking photos, the town slowly stagnates and becomes bored.
+36. Reality: If the player takes no photos, the `NewspaperManager` either crashes or publishes null data during the Morning phase.
+37. The Needs decay system continues, but social shifts completely halt.
+38. To fix Scenario 7, the system must generate fallback global news (e.g., "Heatwave incoming") to keep the simulation alive without player input.
+39. Scenario 8: The Late Night Encounter.
+40. Intent: Players can sneak around at night to catch rare interactions.
+41. Reality: At Night, `TimeManager` triggers `WalkingHome`. All NPCs go indoors and idle infinitely.
+42. The night phase is entirely devoid of gameplay or systemic variation.
+43. To fix Scenario 8, nocturnal personalities must be introduced via `NPCPersonalityData`, allowing some NPCs to wander specifically at night.
+44. The scenarios demonstrate that GPOyun is a simulation without agency.
+45. Emergent gameplay requires rules, not randomness.
+46. The player cannot craft a scenario if the system relies on `Random.Range` for outcomes.
+47. Every scenario must be tethered to deterministic constraints.
+48. If I take a picture of Leo talking to Zoe, it must ALWAYS trigger a gossip event.
+49. The architecture must bridge the gap between the player's mechanical input (taking a photo) and the narrative output (the town's reaction).
+50. Currently, that bridge is broken by synchronous I/O, God-object FSMs, and random number generators.
+51. -
+52. -
+53. -
+54. -
+55. -
+56. -
+57. -
+58. -
+59. -
+60. -
+61. -
+62. -
+63. -
+64. -
+65. -
+66. -
+67. -
+68. -
+69. -
+70. -
+71. -
+72. -
+73. -
+74. -
+75. -
+76. -
+77. -
+78. -
+79. -
+80. -
+81. -
+82. -
+83. -
+84. -
+85. -
+86. -
+87. -
+88. -
+89. -
+90. -
+91. -
+92. -
+93. -
+94. -
+95. -
+96. -
+97. -
+98. -
+99. -
+100. - End of Scenarios deep analysis.

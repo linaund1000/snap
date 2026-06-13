@@ -1,0 +1,102 @@
+COMPONENT DIAGRAM - DEEP ANALYSIS
+=================================
+1. The Component Diagram represents the modular building blocks of GPOyun.
+2. Currently, the diagram is severely compromised due to "Component Bleeding," where components share responsibilities.
+3. Component 1: `CoreSimulationSystem` (Contains TimeManager, GameManager).
+4. This component should only orchestrate the heartbeat of the game.
+5. However, `TimeManager` directly references UI elements to update the clock text.
+6. This violates component boundaries. `TimeManager` must be completely decoupled from the UI Component.
+7. Component 2: `CameraSubsystem` (Contains ViewfinderManager, CameraController, PhotoScorer).
+8. This component is functionally the strongest because it is relatively isolated.
+9. However, `CameraController` handles file I/O (saving PNGs to disk).
+10. File I/O should be abstracted into a dedicated `FileSystemComponent` to handle async writes and error logging.
+11. Component 3: `SocialMatrixComponent` (Contains RelationshipMatrix, AppraisalEngine).
+12. This component is the mathematical brain of the game.
+13. It is currently bloated with Presentation logic. `RelationshipMatrix` explicitly spawns Emojis above NPCs.
+14. The `SocialMatrixComponent` should only output raw data (e.g., `ScoreShiftEvent`), allowing the UI Component to render it.
+15. Component 4: `NPCBrainComponent` (Contains Utility AI, MemoryStream, Needs).
+16. This component is fractured. The Needs update continuously, but the MemoryStream is only appended to, never read.
+17. A true Brain component must feed Memory back into the Needs evaluation (e.g., "I remember this guy hit me, so my Social Desire toward him is 0").
+18. Component 5: `UserInterfaceComponent` (Contains HUDManager, JournalUI).
+19. This component is the most chaotic. It relies on legacy `OnGUI()` rendering and direct references to Singletons.
+20. It needs to be rewritten using a unified `UIController` that binds to global data events.
+21. Component 6: `ProceduralEnvironmentComponent` (Contains TownSquareBuilder).
+22. This component executes once at startup and then goes dormant.
+23. It lacks a dynamic navmesh baker, meaning if an object is spawned later, the NPCs cannot navigate around it.
+24. Component boundaries are the most critical aspect of scalable architecture.
+25. If a component cannot be deleted without breaking the entire game, the boundary is flawed.
+26. Right now, deleting `JournalUI` might break `GameManager` because `JournalUI` holds the pause state logic.
+27. To enforce boundaries, we must introduce `ScriptableObject` Event Channels.
+28. For example, a `VoidEventChannelSO` can trigger `OnMorningArrived`.
+29. `TimeManager` raises it. `NewspaperManager` listens to it. They never know about each other.
+30. This makes components plug-and-play, allowing designers to swap out a `BasicNewspaperManager` for an `AdvancedNewspaperManager` without changing `TimeManager`.
+31. -
+32. -
+33. -
+34. -
+35. -
+36. -
+37. -
+38. -
+39. -
+40. -
+41. -
+42. -
+43. -
+44. -
+45. -
+46. -
+47. -
+48. -
+49. -
+50. -
+51. -
+52. -
+53. -
+54. -
+55. -
+56. -
+57. -
+58. -
+59. -
+60. -
+61. -
+62. -
+63. -
+64. -
+65. -
+66. -
+67. -
+68. -
+69. -
+70. -
+71. -
+72. -
+73. -
+74. -
+75. -
+76. -
+77. -
+78. -
+79. -
+80. -
+81. -
+82. -
+83. -
+84. -
+85. -
+86. -
+87. -
+88. -
+89. -
+90. -
+91. -
+92. -
+93. -
+94. -
+95. -
+96. -
+97. -
+98. -
+99. -
+100. - End of Component Diagram deep analysis.

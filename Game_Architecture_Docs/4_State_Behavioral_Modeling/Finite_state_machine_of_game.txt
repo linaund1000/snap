@@ -1,0 +1,16 @@
+FINITE STATE MACHINE OF GAME
+============================
+State: Loading
+  -> On Initialized -> Playing
+
+State: Playing
+  -> On Pause Menu Opened -> Paused
+  -> On End Condition Met -> GameOver
+
+State: Paused
+  -> On Resume -> Playing
+
+State: GameOver
+  -> On Restart -> Loading\n\n[CURRENT STATUS & CRITIQUE]
+Status: Too Simplistic / Wrong Continuations.
+Critique: Missing transition logic from Paused back to specific sub-states. The state machine is far too simplistic for a simulation game and fails to handle edge cases.\n

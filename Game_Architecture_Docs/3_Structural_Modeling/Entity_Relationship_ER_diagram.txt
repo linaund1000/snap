@@ -1,0 +1,26 @@
+ENTITY-RELATIONSHIP (ER) DIAGRAM (Textual)
+==========================================
+Entity: PhotoData
+  - CapturedTexture (Texture2D)
+  - WorldPosition (Vector3)
+  - PrimarySubject (PhotoSubject)
+  - CompositionScore (Int)
+  - FilePath (String)
+
+Entity: NewsStory
+  - Headline (String)
+  - Category (NewsCategory Enum)
+  - SourcePhoto (PhotoData)
+
+Entity: Relationship Edge
+  - FromID (Int)
+  - ToID (Int)
+  - Score (Int: -100 to 100)
+  - Opinions (List of Strings)
+
+Relationships:
+- NewsPublishedData HAS-A FrontPage (NewsStory)
+- NewsStory HAS-A SourcePhoto (PhotoData)
+- RelationshipMatrix MANAGES Relationship Edges\n\n[CURRENT STATUS & CRITIQUE]
+Status: Badly Implemented Data Structures.
+Critique: Relationships are stored as simple string keys `npc_0_to_npc_1` in a Dictionary, making bidirectional matrix operations and lookups extremely slow and messy.\n

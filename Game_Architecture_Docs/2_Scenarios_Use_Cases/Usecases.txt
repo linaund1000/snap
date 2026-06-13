@@ -1,0 +1,107 @@
+USECASES - DEEP ANALYSIS
+========================
+1. Use Cases define the core interactions between the Player, the Environment, and the NPCs within GPOyun.
+2. UC-01: Take Picture. The primary verb of the player, codified in `TakePictureUseCase.cs`.
+3. UC-01 Execution: Player presses 'C' to aim, Space to capture.
+4. The system validates the `PhotoSubject` via a viewport center raycast in `ViewfinderManager.cs`.
+5. If a subject is hit, `ViewfinderManager` calculates a Composition Score.
+6. A RenderTexture is created to snapshot the camera's active view.
+7. The snapshot is encoded to PNG and saved to the hard drive via `System.IO.File.WriteAllBytes()`.
+8. Critique UC-01: The raycast is a single geometric point, meaning a subject slightly off-center is missed completely.
+9. Critique UC-01: The save operation is completely synchronous on the main thread.
+10. This synchronous write causes the entire game to freeze for 100-200ms during capture, breaking immersion.
+11. Fix: Transition `EncodeToPNG` and file writing to a background worker thread (`Task.Run`).
+12. UC-02: Score Photo Composition.
+13. UC-02 Execution: `PhotoScorer` analyzes the target's InterestLevel and distance.
+14. Critique UC-02: There is no visual feedback to the player explaining *why* a photo scored a 30 vs a 90.
+15. If the player does not understand the scoring mechanism, they cannot intentionally improve their shots.
+16. UC-03: Publish Daily Newspaper. The core systemic environmental action.
+17. UC-03 Execution: Triggered by `TimeManager` entering Morning phase.
+18. `NewspaperManager` selects the highest scoring photo from yesterday's pool.
+19. Generates a `NewsStory` object with a Headline and Category (Scandal, Local, Hero).
+20. Broadcasts the news to all NPCs.
+21. Critique UC-03: The Category assignment is entirely random. A photo of a tree can be labeled a 'Scandal'.
+22. This randomness destroys the deterministic nature of the simulation; Category must be derived from NPC state.
+23. UC-04: NPC Read News. The primary reaction verb of the agents.
+24. UC-04 Execution: NPC walks to the Newspaper Board.
+25. NPC evaluates the `NewsStory` against their `NPCPersonalityData`.
+26. Critique UC-04: Currently, all NPCs crowd the board simultaneously at the exact start of Morning.
+27. This causes severe pathfinding collisions and unrealistic hive-mind behavior.
+28. UC-05: Update Social Relationships. The simulation consequence.
+29. UC-05 Execution: `RelationshipMatrix.ProcessPublishingEvent` executes.
+30. The function loops through every NPC pairing (O(N^2) complexity).
+31. Adjusts relationship integers based on Agreeableness and Neuroticism traits.
+32. Critique UC-05: The math is highly volatile. A single news story can swing a relationship by 40 points.
+33. The clamping (-100 to 100) means relationships hit their maximum extremes within 2 in-game days.
+34. UC-06: NPC Gossip Exchange. The localized social interaction.
+35. UC-06 Execution: Handled by `SocializeAction` in Utility AI.
+36. Two NPCs meet and attempt to synchronize their `Opinions` list.
+37. Critique UC-06: The actual string exchange is not hooked up to the UI. The user never sees the gossip happen.
+38. UC-07: NPC React to Stimulus.
+39. UC-07 Execution: `NPCSensoryMatrix` detects `CameraFlash` stimulus.
+40. Critique UC-07: The sensing radius is hardcoded. Occlusion checking is basic and fails around corners.
+41. Scenario A: The Gossip Catalyst.
+42. Intent: Player exposes a secret, town turns on the victim.
+43. Current Status: Partially works, but the 'secret' is just a random dice roll on publish, not an actual captured event.
+44. Scenario B: The Hero Shot.
+45. Intent: Player captures a good deed, victim becomes beloved.
+46. Current Status: Fails because NPCs have no "Good Deed" actions in their Utility AI to capture.
+47. Use Case Diagram Analysis: The flow is entirely one-directional.
+48. Player -> Environment -> System -> NPC.
+49. There is no use case for NPC -> Environment -> Player.
+50. For example, an angry NPC should be able to attack the player or block the camera lens.
+51. Use Case Story 1 (Player perspective): "I want to manipulate the town's social hierarchy."
+52. Currently, the player cannot intentionally manipulate it because the News Category is random.
+53. Fix: The PhotoData must encode the *Current Action* of the subject (e.g., 'Target is stealing' -> Category = Scandal).
+54. Use Case Story 2 (System perspective): "I must gracefully handle empty photo pools."
+55. Currently, if the player takes no photos, the Morning phase crashes or publishes null data.
+56. Fix: Implement fallback 'Global News' stories (weather, economy) when local photos are absent.
+57. Use Case Story 3 (NPC perspective): "I want to remember who betrayed me."
+58. Currently, `NPCMemoryStream` adds events but the `AppraisalEngine` rarely queries historical data, only immediate stimuli.
+59. Fix: Incorporate a 'Grudge' multiplier based on the history log during relationship modifications.
+60. The absence of a 'Review Photo' usecase integration means the player is forced to publish everything they shoot.
+61. `SelectPictureUseCase` exists as a script but is entirely disconnected from the core loop.
+62. The player needs an Editorial UI to choose *which* photo goes on the front page.
+63. Without this, player agency is artificially limited.
+64. The 'Group Hangout' scenario highlights the weakness in the `SocialGroupManager`.
+65. A leader initiates a group, but followers just lerp to the position without acknowledging each other.
+66. There is no "Circle Up" or "Face Center" logic, resulting in NPCs staring at walls during a hangout.
+67. The scenarios lack failure states. What if a player tries to photograph a vampire? What if the camera is out of film?
+68. Implementing an 'Inventory' use case (Film count, Battery life) would deepen the simulation constraints.
+69. The current use cases define a sandbox toy, not a structured game.
+70. To transition to a game, we need 'Objective' use cases (e.g., 'Editor demands a photo of Leo being angry').
+71. The `ApplyPublishingImpactUseCase` attempts to encapsulate the relationship shift but overlaps heavily with `RelationshipMatrix`.
+72. This overlapping responsibility creates unpredictable state mutations if both are called.
+73. `ComposeEditorialUseCase` is completely empty. It is a stub waiting for the UI implementation.
+74. The core cybernetic loop requires these Use Cases to execute cleanly and predictably.
+75. If UC-01 (Capture) stutters, the player feels disconnected.
+76. If UC-03 (Publish) is random, the player feels robbed of agency.
+77. If UC-05 (Update Relationships) is invisible, the simulation feels dead.
+78. Therefore, the highest priority is exposing the internal state of UC-05 to the player.
+79. The `JournalUI` is the intended vehicle for this exposure.
+80. However, the JournalUI text parsing is basic and truncates long strings.
+81. The Use Case of "Player views the Journal" needs an expansion to "Player searches/filters the Journal by NPC Name".
+82. Without filtering, a simulation of 10+ NPCs creates an unreadable wall of text in the Journal.
+83. In conclusion, the Scenarios and Use Cases are conceptually brilliant but technically incomplete.
+84. They define a systemic masterpiece but execute as a chaotic random number generator.
+85. Refactoring must focus on linking the Player's deterministic input (timing and framing of a shot) to the deterministic output (News Category).
+86. Only then will the Use Case Stories resonate with the player as intended.
+87. The player must feel like a puppeteer of the social matrix, not a passive observer of random events.
+88. The `SyncSocialDbUseCase` indicates a planned integration with a backend database or save system.
+89. Implementing this is critical for persistent, multi-session gameplay.
+90. The use cases must also be expanded to handle NPC death, departure, or arrival, which currently break the `NPCManager` array lists.
+91. The system assumes a static population size of exactly 10.
+92. Dynamic population use cases (UC-09: NPC Arrives in Town) are missing and necessary for long-term play.
+93. Finally, the use case for the `TimeManager` advancing is too fast. 120 seconds per phase gives the player no time to observe.
+94. The duration must be exposed as a setting, allowing players to slow down the simulation to track specific scenarios.
+95. Fixing these use cases is the absolute foundation of the project's next milestone.
+96. Every line of code written must explicitly serve one of these primary Use Cases.
+97. If a script does not facilitate taking a photo, publishing news, or NPC reactions, it is bloat and should be cut.
+98. The strict adherence to these deterministic use cases will save the architecture from collapsing.
+99. The cybernetic loop is king.
+100. Player acts -> System measures -> NPC adapts -> System reports -> Player acts.
+101. Every use case sits on one of those arrows. Ensure the arrows never break.
+
+[CURRENT STATUS & CRITIQUE]
+Status: Bad Implementations.
+Critique: Missing clear use cases for Player feedback. Right now viewing the social matrix is hidden behind a Tab key overlay that is visually cluttered and hard to parse. System feedback is for communication with the user, and this fails at it.

@@ -1,0 +1,11 @@
+SUB-STATE TRANSITION TABLES (NPC Needs & AI)
+============================================
+Utility AI Evaluation Sub-state:
+Current Focus      | Condition                      | Next Focus
+-------------------------------------------------------------------------
+Evaluate Boredom   | Boredom > 70 & Energy > 50     | Execute WanderAction
+Evaluate Social    | SocialDesire > 80              | Execute GossipAction
+Evaluate Energy    | Energy < 20                    | Execute GoHomeAction
+Evaluate News      | PendingNews == True            | Execute ReadNewsAction\n\n[CURRENT STATUS & CRITIQUE]
+Status: Hardcoded Logic.
+Critique: Needs evaluation intervals are hardcoded in `NPCActionPlanner` instead of being event-driven or exposed to the designer.\n

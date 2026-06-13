@@ -1,0 +1,13 @@
+STIMULUS-RESPONSE MATRIX (Sensory & Appraisal)
+==============================================
+Stimulus Type             | Personality Modifiers       | Response Outcome
+--------------------------------------------------------------------------------------
+Camera Flash              | Neuroticism > 0.6           | Angry, Flee, Rel -15
+Camera Flash              | Extraversion > 0.7          | Happy, Pose, Rel +10
+Player Aimed Camera       | Has 'CameraShy' Memory      | Fearful, Flee, Rel -30
+Local Hero News           | Target == Self              | Happy, Pose ⭐, Rel +30
+Scandal News              | Target == Self              | Angry, Cry 💔, Rel -40
+Scandal News              | Target == Other, Agreeable  | Sad, Sympathy, Rel -5
+Scandal News              | Target == Other, Disagree.  | Happy, Schadenfreude, Rel -20\n\n[CURRENT STATUS & CRITIQUE]
+Status: Magic Numbers.
+Critique: Magic numbers everywhere. Reaction deltas (like +10 or -30) are hardcoded directly into `AppraisalEngine` and `RelationshipMatrix` rather than being data-driven via ScriptableObjects.\n

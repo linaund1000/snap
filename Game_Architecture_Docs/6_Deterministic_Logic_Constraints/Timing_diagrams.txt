@@ -1,0 +1,16 @@
+TIMING DIAGRAMS (Textual)
+=========================
+System Clock (TimeManager)
+0s --- 120s --- 240s --- 360s --- 480s --- 600s
+ |      |        |        |        |        |
+Morn   Midday   Aft.Nn   Eve.     Night    Morn (Cycle resets)
+ |                                          |
+ +- Newspaper Published                     +- Newspaper Published
+
+Utility AI Evaluation Tick
+NPC_0: 0.0s -> 1.0s -> 2.0s
+NPC_1: 0.3s -> 1.3s -> 2.3s
+NPC_2: 0.7s -> 1.7s -> 2.7s
+(Staggered intervals prevent CPU spikes)\n\n[CURRENT STATUS & CRITIQUE]
+Status: Non-deterministic Timers.
+Critique: Staggered evaluation intervals in `NPCActionPlanner` use `Random.Range` on Start, which makes debugging impossible and causes non-deterministic simulation execution.\n

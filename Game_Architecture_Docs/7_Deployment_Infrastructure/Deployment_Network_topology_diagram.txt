@@ -1,0 +1,101 @@
+DEPLOYMENT / NETWORK TOPOLOGY DIAGRAM - DEEP ANALYSIS
+=====================================================
+1. Although GPOyun is a single-player game, its architecture can be modeled as a local deployment topology.
+2. The "Server" is the deterministic simulation core (TimeManager, RelationshipMatrix).
+3. The "Client" is the View layer (Unity rendering, HUDManager, CameraSystem).
+4. The "Database" is the local filesystem (PNG storage, JSON state persistence).
+5. Currently, this topology is collapsed into a single thread, causing severe performance bottlenecks.
+6. When the "Client" (Camera) saves a photo to the "Database" (Hard Drive), the "Server" (Simulation) completely freezes.
+7. This synchronous I/O blocking is unacceptable for a fluid simulation game.
+8. The deployment fix requires adopting asynchronous patterns.
+9. File I/O must be offloaded to `Task.Run` background threads using C# async/await.
+10. The `NewspaperManager` acts as an internal network broadcaster.
+11. When news is published, it sends a payload (`NewsPublishedData`) to all NPC "nodes".
+12. This broadcast is currently immediate and blocks the main thread.
+13. In a proper topology, the broadcast should be queued and distributed over multiple frames to prevent CPU spikes.
+14. The `PhotoData` struct currently holds a massive 512x512 uncompressed `Texture2D` in memory.
+15. In a simulated "Network Topology", passing this texture between systems (Camera -> Newspaper -> UI) consumes massive bandwidth/RAM.
+16. The architecture must replace the raw texture with a lightweight reference (e.g., a file path or a hashed ID).
+17. The UI layer should only load the texture from disk asynchronously when it needs to render it.
+18. There is currently no `SyncSocialDbUseCase` implemented, meaning the "Database" layer is mostly missing.
+19. A localized SQLite database or a compressed JSON serializer must be deployed to save the O(N^2) Relationship Matrix.
+20. If multiplayer or cloud-sync features are ever considered, the current Singleton architecture will fail immediately.
+21. Network topologies require decoupled, stateless systems where the Client sends commands (RPCs) and the Server sends State.
+22. GPOyun mixes command and state continuously. `JournalUI` (Client) directly commands `GameManager` (Server) to pause.
+23. To future-proof the deployment, all player actions must be formalized as Commands (e.g., `CommandCapturePhoto`, `CommandOpenJournal`).
+24. The Game Engine acts as the authoritative server, processing Commands and broadcasting State Changes.
+25. The lack of a deployment pipeline for assets (Addressables) means the executable size will bloat linearly with new content.
+26. -
+27. -
+28. -
+29. -
+30. -
+31. -
+32. -
+33. -
+34. -
+35. -
+36. -
+37. -
+38. -
+39. -
+40. -
+41. -
+42. -
+43. -
+44. -
+45. -
+46. -
+47. -
+48. -
+49. -
+50. -
+51. -
+52. -
+53. -
+54. -
+55. -
+56. -
+57. -
+58. -
+59. -
+60. -
+61. -
+62. -
+63. -
+64. -
+65. -
+66. -
+67. -
+68. -
+69. -
+70. -
+71. -
+72. -
+73. -
+74. -
+75. -
+76. -
+77. -
+78. -
+79. -
+80. -
+81. -
+82. -
+83. -
+84. -
+85. -
+86. -
+87. -
+88. -
+89. -
+90. -
+91. -
+92. -
+93. -
+94. -
+95. -
+96. -
+97. -
+98. -
+99. - End of Deployment Topology deep analysis.

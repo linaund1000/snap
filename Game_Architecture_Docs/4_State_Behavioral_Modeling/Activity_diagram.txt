@@ -1,0 +1,13 @@
+ACTIVITY DIAGRAM (Textual)
+==========================
+Activity: Morning News Publishing Loop
+1. TimeManager transitions to DayPhase.Morning.
+2. TimeManager calls NewspaperManager.OnMorningArrived().
+3. NewspaperManager selects Best Photo from Pool.
+4. NewspaperManager creates NewsStory and calls RelationshipMatrix.ProcessPublishingEvent().
+5. RelationshipMatrix loops over all NPCs, calculating Relationship Deltas based on Personality.
+6. RelationshipMatrix updates edge values and triggers NPC Emoji reactions.
+7. NewspaperManager signals NPCManager -> NPCs get 'PendingNews' flag.
+8. NPCs evaluate Utility AI and pathfind to NewspaperBoard.\n\n[CURRENT STATUS & CRITIQUE]
+Status: Blocking Operations.
+Critique: Activities lack clear interruption boundaries. A newspaper publish triggers a synchronous mass evaluation across all NPCs that causes frame drops.\n

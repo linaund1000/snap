@@ -1,0 +1,107 @@
+BASE DOCUMENTATION - DEEP ANALYSIS
+==================================
+1. System Overview: GPOyun is a deterministic social simulation game driven by player photography.
+2. The core loop revolves around the player capturing events, the system publishing them, and NPCs reacting.
+3. Architecture Paradigm: The game uses a monolithic Singleton Manager pattern across its core systems.
+4. GameManager.cs: Acts as the root state machine, which currently poses significant structural limitations.
+5. GameManager maintains an enum GameState { Loading, Playing, Paused, GameOver }.
+6. GameManager uses DontDestroyOnLoad to persist across scene changes, indicating it is the root lifecycle owner.
+7. GameManager is tightly coupled to NPCManager and NewspaperManager via direct object references.
+8. TimeManager.cs: Drives the temporal simulation logic and is the primary driver of the deterministic timeline.
+9. TimeManager divides the 24-hour cycle into 5 DayPhases: Morning, Midday, Afternoon, Evening, Night.
+10. The phase duration is currently hardcoded to 120 real-world seconds, limiting testing flexibility.
+11. TimeManager directly invokes NewspaperManager.OnMorningArrived() without using an Event Bus.
+12. This direct invocation creates a rigid execution order, preventing asynchronous event handling.
+13. NewspaperManager.cs: The core data broker between the player's camera and the NPC social network.
+14. NewspaperManager stores a List<PhotoData> representing all captured photos in a given day.
+15. A NewsPublishedData object is generated daily, containing a FrontPage, SecondStory, and SmallStory.
+16. The NewspaperManager triggers RelationshipMatrix.ProcessPublishingEvent(front), shifting the entire social network.
+17. NPCManager.cs: A simple registry pattern that maintains a List<NPCController> of all active agents.
+18. RelationshipMatrix.cs: The most critical simulation component, managing the O(N^2) social web.
+19. RelationshipMatrix tracks bidirectional affinities using string keys format: 'npc_A_to_npc_B'.
+20. Using string concatenation in a tight loop for relationship lookups creates massive garbage collection pressure.
+21. Affinities are clamped mathematically between -100 (Hostile) and +100 (Best Friend).
+22. The matrix also stores string-based 'opinions' (e.g., 'I read the paper today. Leo is amazing!').
+23. The project currently completely lacks a persistent serialization system.
+24. Data Persistence: Captured PNGs are saved to disk via System.IO.File.WriteAllBytes().
+25. However, the RelationshipMatrix dictionaries are entirely ephemeral and reset on game restart.
+26. TownSquareBuilder.cs: A procedural generation utility for creating the physical Mediterranean environment.
+27. The builder constructs composite primitives (houses, trees, benches) on Layer 7 (Collision).
+28. NavMeshObstacle carving is attached to generated houses to dynamically cut holes in the pathfinding grid.
+29. The builder spawns 10 NPCs using a preset color array (Terracotta, CobaltBlue, PineGreen, etc.).
+30. VisualUtils.cs: Centralizes material generation to avoid unbatched draw calls.
+31. The codebase lacks dependency injection, making unit testing impossible for core logic.
+32. The Game Architecture relies heavily on the Unity Update loop rather than a FixedUpdate deterministic tick.
+33. There is no abstraction layer between the UI (HUDManager) and the Data Layer (RelationshipMatrix).
+34. The lack of an EventBus means adding new subsystems requires modifying existing Singleton classes.
+35. The codebase is entirely C#, utilizing the new InputSystem for PlayerController and CameraController.
+36. Memory Management: RenderTexture usage in CameraController lacks proper Release() safety nets in error states.
+37. Garbage Collection: The string interpolation in JournalUI and RelationshipMatrix Update loops causes memory spikes.
+38. Architecture Gap: There is no formal 'AudioSystem'. Audio is handled via isolated PlayOneShot calls.
+39. Architecture Gap: The NPC state machine conflicts with the Utility AI architecture.
+40. The Utility AI attempts to drive behavior via Needs, but the NPCController FSM forcefully overrides it.
+41. Todo: Implement a true EventBus (e.g., Action<T>) to decouple Managers.
+42. Todo: Refactor RelationshipMatrix to use integer pairs (int, int) as struct keys instead of strings to eliminate GC.
+43. Todo: Move TimeManager logic to FixedUpdate to ensure deterministic DayPhase advancement.
+44. Todo: Implement ISaveable interfaces for all Managers to write state to JSON.
+45. Todo: Complete the 'SitAction' logic which is stubbed but not implemented in the Utility AI.
+46. Todo: Decouple JournalUI from GameManager.PauseGame() to respect MVC principles.
+47. The current system relies on FindObjectsByType which is extremely slow if called outside of Awake().
+48. In `RelationshipMatrix.LogThresholdShift`, FindObjectsByType is called frequently, severely degrading performance.
+49. The overall aesthetic is driven by code (TownSquareBuilder) rather than Prefabs, complicating level design.
+50. Future architecture must shift from code-driven primitive generation to Addressables/Prefab instantiation.
+51. Current architecture is highly monolithic.
+52. The domain logic (Relationships) is mixed with Presentation logic (spawning Emojis).
+53. `RelationshipMatrix` explicitly calls `NPCController.TriggerReaction()`, violating the Single Responsibility Principle.
+54. The UI (HUDManager) directly reads internal variables from `CameraController` to toggle viewfinder graphics.
+55. This tight coupling means modifying the camera logic breaks the HUD.
+56. The codebase lacks Interfaces (e.g., INewsReader, IPhotoSubject) relying entirely on concrete implementations.
+57. Bootstrapping: `GPOyunBootstrap` attempts to initialize singletons, but `Awake` race conditions still exist.
+58. `SocialGroupManager.cs` attempts to create dynamic groups but fails to synchronize animations.
+59. `SocialGroup` objects hold hard references to `NPCController`, preventing safe NPC deletion/despawning.
+60. The use of `FindAnyObjectByType<Player.PlayerController>()` inside NPC Update loops scales at O(N) cost.
+61. The current architecture does not support Object Pooling; NPCs and Emojis are instantiated and destroyed repeatedly.
+62. `EmojiReaction` class in HUDManager instantiates text on the GUI layer via `OnGUI()`, which is a deprecated, slow Unity system.
+63. Moving forward, the architecture must transition from `OnGUI` to Unity UI Toolkit or TextMeshPro Canvas elements.
+64. The documentation states the game is deterministic, but the heavy use of `Time.deltaTime` and `Random.Range` disproves this.
+65. True determinism requires fixed tick execution and seeded random number generators.
+66. The overarching architectural weakness is a lack of strict boundaries between Simulation, Data, and View.
+67. The simulation (NPC Needs) directly drives the View (Animations) without an intermediary controller.
+68. The Data (RelationshipMatrix) directly drives the View (Emojis) without raising an event.
+69. Refactoring to a Model-View-Controller (MVC) or Entity-Component-System (ECS) pattern is required for scalability.
+70. `NPCController` must be split into `NPCModel` (Needs, State), `NPCView` (Animations, Emojis), and `NPCBrain` (Utility AI).
+71. `NewspaperManager` must be split into `PhotoDatabase`, `NewsGenerator`, and `NewsDistributor`.
+72. `GameManager` should be stripped of its references to other managers, acting only as a high-level state coordinator.
+73. `TimeManager` should broadcast an `OnTimeTicked` event and an `OnPhaseChanged` event.
+74. All UI elements should subscribe to data models rather than querying singletons in their `Update()` loops.
+75. The reliance on `Resources.GetBuiltinResource<Font>` in `JournalUI` limits custom branding and localization.
+76. The game's executable size is small due to procedural generation, but CPU load is high.
+77. The codebase lacks formal logging; `Debug.Log` is littered everywhere without severity levels or filtering.
+78. A dedicated `SocialHistoryLogger` exists but is underutilized in tracking deep system anomalies.
+79. The `PhotoScorer` algorithm evaluates composition purely by raycasting, ignoring color theory or lighting.
+80. `SettingsController` is currently a stub and needs integration with Unity's PlayerPrefs.
+81. `SplashController` and `GalleryController` represent isolated scenes that must pass data via static memory.
+82. The use of `Application.dataPath` for saving photos breaks on mobile and console deployments; `persistentDataPath` must be used.
+83. The architecture relies on implicit assumptions (e.g., NPC ID 0 is always Leo), which breaks if spawning is randomized.
+84. `NPCPersonalityData` is a ScriptableObject, which is excellent for memory sharing, but currently lacks variance between instances.
+85. To achieve true simulation depth, instances of personality data must be cloned and mutated slightly.
+86. The architecture is currently a 'God Object' hierarchy posing as a modular system.
+87. Every system knows about every other system.
+88. To fix this, an `EventChannel` ScriptableObject architecture should be implemented.
+89. E.g., `NewsPublishedEventChannel` allows `NewspaperManager` to broadcast without knowing who is listening.
+90. E.g., `PhotoCapturedEventChannel` allows UI to update without querying the `CameraController` cooldown timer.
+91. The `GlobalInputListener` attempts to centralize input but `CameraController` still queries `Keyboard.current` directly.
+92. This direct hardware polling bypasses Unity's Input Action mapping, making controller support impossible.
+93. The architecture must standardize entirely on the Input Action Asset workflow.
+94. Ultimately, the Base Architecture is a highly functional prototype but structurally brittle.
+95. It serves well as an A1 proof-of-concept for the cybernetic loop.
+96. However, it will collapse under its own weight if scaled to 50+ NPCs or multiplayer.
+97. The next phase must focus strictly on Decoupling, Event-Driven Communication, and strict MVC boundaries.
+98. Without these changes, implementing complex behaviors like nested social hierarchies will result in spaghetti code.
+99. The core requirement remains: the architecture must support autonomous, deterministic social simulation.
+100. Achieving this requires discipline in data flow and strict adherence to separation of concerns.
+101. The cybernetic loop is king: Player acts -> System measures -> NPC adapts -> System reports -> Player acts.
+
+[CURRENT STATUS & CRITIQUE]
+Status: Outdated / Misaligned.
+Critique: The documentation describes a cybernetic feedback loop, but currently, System Feedback is poorly implemented for communication with the user. After all usage (taking photos, NPCs reading news), we need something robust to communicate the simulation's state to the user. Right now, it's just floating emojis and a hidden scoreboard.

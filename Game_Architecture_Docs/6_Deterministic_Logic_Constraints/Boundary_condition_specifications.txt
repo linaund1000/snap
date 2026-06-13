@@ -1,0 +1,14 @@
+BOUNDARY CONDITION SPECIFICATIONS
+=================================
+1. Matrix Bounds:
+   All relationship scores are rigidly clamped between -100 (Absolute Rival) and +100 (Best Friend).
+2. Needs Bounds:
+   All physiological/psychological needs (Boredom, Energy, Social) are clamped between 0 and 100.
+3. Time Bounds:
+   24-hour cycle logic wraps modulo 24. Day phases are modulo 5.
+4. Photo Pool Limits:
+   A maximum number of photos in the Newspaper pool is enforced to prevent Memory Leaks if the player spams the shutter.
+5. Physics Constraints:
+   NPCs use NavMesh Obstacle Carving to avoid walking through dynamic environment props (Benches, Fountains) and each other.\n\n[CURRENT STATUS & CRITIQUE]
+Status: Duplicated Logic.
+Critique: Clamping logic for relationships (-100 to 100) and Needs (0 to 100) is duplicated across multiple scripts instead of being handled by a dedicated bounded data type.\n

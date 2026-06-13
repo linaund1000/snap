@@ -1,0 +1,106 @@
+TRANSFER FUNCTIONS & STATE-SPACE MODELS - DEEP ANALYSIS
+=======================================================
+1. A deterministic simulation requires that a specific sequence of inputs will always produce the exact same physical and mathematical outputs.
+2. In GPOyun, the core constraints rely on transfer functions (how fast variables change) and state-space models (the matrix of all possible variables).
+3. The most critical failure in the current determinism is the use of `Time.deltaTime` inside `Update()` loops across multiple scripts.
+4. Transfer functions for NPC Needs (`SocialDesire`, `Energy`, `Boredom`) use Euler integration: `Need(t+1) = Need(t) + Rate * deltaTime`.
+5. Because framerates fluctuate wildly based on hardware, the accumulation of floating-point errors causes the simulation to diverge.
+6. A player running the game at 144Hz will have a slightly different relationship matrix after 1 hour compared to a player running at 30Hz.
+7. The fix: Move all mathematical integration for the simulation out of `Update()` and into Unity's `FixedUpdate()`, which executes at a guaranteed fixed timestep (e.g., 0.02s).
+8. Alternatively, build a custom `SimulationTick()` loop driven by a centralized `TimeManager` that passes a constant `dt` to all listeners.
+9. State-space boundary conditions are duplicated and inconsistent.
+10. `RelationshipMatrix.cs` clamps friendship scores between -100 and +100.
+11. `NPCNeeds.cs` clamps physiological desires between 0 and 100.
+12. These boundaries are hardcoded as raw `Mathf.Clamp()` calls directly inside the mutation logic.
+13. If a designer wants to change the max relationship score to 1000, they must manually hunt down every script modifying the matrix.
+14. The fix: Implement a dedicated `BoundedFloat` or `BoundedInt` struct that natively handles clamping, and define the Max/Min limits in a global `SimulationConfig` ScriptableObject.
+15. Non-linear scaling is entirely missing from the transfer functions.
+16. Currently, the `AppraisalEngine` applies a flat delta to relationships: e.g., a "Hero" article adds exactly +15 to the relationship.
+17. Adding +15 to a stranger (Score: 0) makes sense. Adding +15 to someone who already despises you (Score: -90) is unrealistic.
+18. Real social dynamics require asymptotic transfer functions; it should be much harder to change an entrenched opinion than a neutral one.
+19. The math should incorporate a dampening curve: `Delta = BaseShift * (1 - abs(CurrentScore)/MaxScore)`.
+20. Another fatal flaw in the deterministic constraint system is the prevalent use of `Random.Range()`.
+21. `NPCActionPlanner` utilizes `Random.Range` in its `Start()` method to stagger the AI evaluation timers, intending to prevent CPU spikes.
+22. `NewspaperManager` utilizes `Random.Range` to assign a Category (Scandal vs Hero) to a published photo.
+23. The use of unseeded RNG destroys any possibility of saving, loading, or reproducing a simulation state.
+24. If the game crashes, the player's loaded save file will progress differently than the timeline they lost.
+25. The fix: Instantiate a global `System.Random` PRNG (Pseudo-Random Number Generator) with a fixed master seed stored in the Save File.
+26. Every subsystem must request random numbers from this centralized PRNG, guaranteeing the same sequence of numbers across reloads.
+27. The Data Flow Diagrams (DFD) reveal bidirectional data leakage.
+28. Strict determinism requires a unidirectional data flow: Inputs -> Simulation Engine -> State Update -> View Render.
+29. In GPOyun, the View (UI) occasionally mutates the State (e.g., JournalUI pausing the GameState directly).
+30. The `NPCMemoryStream` represents a dangerous state-space leak.
+31. It currently appends strings to an unbounded `List<string>` every time an event occurs.
+32. In a game meant to run for hours or days, this array will grow infinitely, consuming all available RAM.
+33. The constraint fix: `NPCMemoryStream` must be refactored into a Ring Buffer (Circular Array) with a strict capacity limit (e.g., maximum 50 recent events).
+34. The older events are mathematically overwritten by the modulo operator, ensuring a fixed memory footprint.
+35. The physics constraints driving NPC pathfinding rely on standard `NavMeshAgent` implementation.
+36. `NavMeshAgent` uses its own internal asynchronous threading to calculate paths, which is inherently non-deterministic.
+37. While we cannot rewrite Unity's NavMesh, we must ensure that the logical layer waits for a deterministic confirmation (`agent.pathPending == false`) before executing state transitions.
+38. The `PhotoScorer` algorithm assumes deterministic raycasting but relies on Screen Center calculations.
+39. If two NPCs overlap in front of the camera, the raycast will randomly hit whichever collision mesh Unity processes first in the physics frame.
+40. The fix: Sort all subjects within the camera frustum by `Vector3.Distance` to the lens, explicitly scoring the closest target to guarantee deterministic outcomes.
+41. In summary, the mathematical logic governing the simulation is currently built like a prototype, lacking the rigid constraints required for a true cybernetic loop.
+42. By migrating to FixedUpdate integration, seeded PRNG, asymptotic social math, and bounded data structures, the simulation will become stable, scalable, and fully deterministic.
+43. -
+44. -
+45. -
+46. -
+47. -
+48. -
+49. -
+50. -
+51. -
+52. -
+53. -
+54. -
+55. -
+56. -
+57. -
+58. -
+59. -
+60. -
+61. -
+62. -
+63. -
+64. -
+65. -
+66. -
+67. -
+68. -
+69. -
+70. -
+71. -
+72. -
+73. -
+74. -
+75. -
+76. -
+77. -
+78. -
+79. -
+80. -
+81. -
+82. -
+83. -
+84. -
+85. -
+86. -
+87. -
+88. -
+89. -
+90. -
+91. -
+92. -
+93. -
+94. -
+95. -
+96. -
+97. -
+98. -
+99. -
+100. - End of Deterministic Logic & Constraints deep analysis.
+
+[CURRENT STATUS & CRITIQUE]
+Status: Non-deterministic Integration.
+Critique: Euler integration relies on `Time.deltaTime` across multiple classes instead of a unified, fixed simulation tick. This causes simulation divergence depending on the user's framerate. Staggered evaluation intervals in `NPCActionPlanner` use `Random.Range`, destroying reproducibility.

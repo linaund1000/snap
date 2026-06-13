@@ -1,0 +1,20 @@
+DATA FLOW DIAGRAM (DFD)
+=======================
+[Player Input (WASD/Mouse)] -> (PlayerController) -> [Camera Raycast]
+                                                        |
+                                                        v
+[Subject Metadata] <-- (PhotoSubject component) <--- (CameraController)
+                                                        |
+                                                        v
+[Texture2D Array] + [Metadata] ---> (TakePictureUseCase) --> [File I/O: write PNG]
+                                                        |
+                                                        v
+(NewspaperManager Pool) <-------------------------------+
+        |
+        v
+[NewsPublishedData] ---> (RelationshipMatrix) ---> [Global Relation Dictionary Updates]
+        |
+        v
+(NPC AppraisalEngine) ---> [Emotion Update] ---> (PantomimeGestures & Emojis)\n\n[CURRENT STATUS & CRITIQUE]
+Status: Messy Data Flow.
+Critique: Data flow is bidirectional and messy. UI reads from core logic, but core logic also directly invokes UI singletons (e.g. spawning emojis), breaking MVC patterns.\n

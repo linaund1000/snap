@@ -1,0 +1,13 @@
+STATE TRANSITION TABLE (NPC)
+============================
+Current State     | Condition / Trigger                 | Next State
+-------------------------------------------------------------------------
+Idle              | Utility AI selects WanderAction     | Wandering
+Wandering         | Arrive at Destination               | Idle
+Any               | See Camera Flash (Neurotic > 0.6)   | Fleeing / Reacting
+Any               | Morning Phase Begins                | WalkingToBoard
+WalkingToBoard    | Arrive at Board Node                | Reading
+Reading           | Processing News Coroutine ends      | Reacting
+Reacting          | Pose Timer Expires                  | WalkingHome / Idle\n\n[CURRENT STATUS & CRITIQUE]
+Status: Dead Ends.
+Critique: Dead ends everywhere. Example: `WalkingHome` state doesn't transition back to `Idle` cleanly in the morning, causing NPCs to get stuck in their houses.\n

@@ -1,0 +1,18 @@
+OBJECT DIAGRAM (Textual)
+========================
+Instance: GameManager_Ins (GameManager)
+  State: Playing
+
+Instance: RelationshipMatrix_Ins (RelationshipMatrix)
+  Relations: [npc_0_to_npc_1: 45], [npc_1_to_npc_0: 45]
+
+Instance: NPC_0 (NPCController)
+  ID: 0, Name: "Leo"
+  Emotion: Neutral
+  Components: Planner_0, Memory_0, Needs_0 (Energy: 80, Boredom: 20)
+
+Instance: NewspaperManager_Ins (NewspaperManager)
+  History: [Day 1: "Local Hero", Day 2: "Scandal!"]
+  TodayPhotos: [PhotoData_A, PhotoData_B]\n\n[CURRENT STATUS & CRITIQUE]
+Status: Fragmented State.
+Critique: Object state is heavily fragmented. `RelationshipMatrix` holds opinions in strings, `NPCNeeds` holds floats, and `NPCController` holds an Enum that conflicts with Utility AI.\n

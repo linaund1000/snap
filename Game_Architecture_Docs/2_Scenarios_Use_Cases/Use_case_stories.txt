@@ -1,0 +1,9 @@
+USE CASE STORIES
+================
+Story: Take Picture
+As a Player, I hold the 'C' key to aim the viewfinder. I point the camera at an NPC. I press Spacebar to capture. The CameraController calculates a composition score based on the subject's screen space, creates a RenderTexture snapshot, saves it to disk as a PNG, and passes the metadata to the NewspaperManager pool.
+
+Story: NPC Read News
+As an NPC, during the Morning phase, my Utility AI increases my 'HasPendingNews' flag. My ActionPlanner selects 'ReadNewsAction'. I walk to the Newspaper Board. I read the front page story. My Appraisal Engine evaluates if the story is about me or someone else, checking my Agreeableness and Neuroticism traits, and shifts my internal relationship scores accordingly.\n\n[CURRENT STATUS & CRITIQUE]
+Status: Wrong Continuations.
+Critique: The stories are too happy-path. When an action fails (e.g., photo has no subject, or group hangout fails to find members), the system silently fails instead of providing meaningful feedback to the player.\n

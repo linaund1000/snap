@@ -1,0 +1,14 @@
+SEQUENCE DIAGRAMS (Textual)
+===========================
+Sequence: NPC Reads News About Themselves
+Player -> CameraController: TakePicture(Target=NPC_1)
+CameraController -> NewspaperManager: StorePhoto()
+TimeManager -> NewspaperManager: OnMorningArrived()
+NewspaperManager -> NPC_1: ReceiveNews(Data)
+NPC_1 -> UtilityAI: Increase Priority of ReadNewsAction
+NPC_1 -> Board: Walk To Board
+NPC_1 -> AppraisalEngine: Evaluate(NewsData)
+AppraisalEngine -> NPC_1: Emotion = Angry, RelWithPlayer = -40
+NPC_1 -> HUDManager: SpawnEmoji(🤬)\n\n[CURRENT STATUS & CRITIQUE]
+Status: Synchronous Chaining.
+Critique: Synchronous chaining of events. `NewspaperManager` iterates all NPCs synchronously and directly modifies UI. This is bad for both performance and architectural decoupling.\n

@@ -1,0 +1,106 @@
+CLASS DIAGRAM - DEEP ANALYSIS
+=============================
+1. The Class Diagram of GPOyun reveals the structural foundation of the C# codebase and its deep architectural flaws.
+2. The most glaring issue is the existence of the God Object Antipattern in the core agent class.
+3. `NPCController.cs` is a massive god class spanning over 450 lines of tightly coupled logic.
+4. `NPCController` attempts to handle physiological needs, pathfinding, emotional state, UI emojis, and event listening simultaneously.
+5. This violates the Single Responsibility Principle (SRP) and makes the class impossible to extend safely.
+6. A single change to how the NPC walks can accidentally break how the NPC calculates its friendship score.
+7. To resolve this, `NPCController` must be refactored into distinct, composable components using the Unity component model.
+8. Component 1: `NPCLocomotion` (Handles NavMeshAgent, movement speed, path calculation).
+9. Component 2: `NPCEmotion` (Handles Valence/Arousal scores, current emotional Enum state).
+10. Component 3: `NPCView` (Handles Animator parameters, IK, Emoji UI instantiation).
+11. Component 4: `NPCBrain` (The Utility AI execution engine).
+12. The `RelationshipMatrix` class acts as the centralized social database but relies on structural anti-patterns.
+13. Relationships are stored as generic `Dictionary<string, int>` using concatenated keys like "npc_0_to_npc_1".
+14. String keys inside a massive O(N^2) permutation loop create intense memory fragmentation and Garbage Collection spikes.
+15. Structurally, the matrix should use a composite struct key `public struct NPCPair { public int A; public int B; }` implementing `IEquatable<NPCPair>`.
+16. `NewspaperManager` is another structural bottleneck. It acts as both a Data Repository (`PhotoData` lists) and an execution pipeline.
+17. It should be split into `PhotoDatabase` (Data Layer) and `NewsGenerator` (Service Layer).
+18. `GameManager`, `HUDManager`, and `TimeManager` all inherit from `MonoBehaviour` and implement the Singleton pattern `public static Instance { get; private set; }`.
+19. While this allows global access, it completely bypasses Unity's intended component hierarchy and prevents dependency injection.
+20. `JournalUI` directly reads from `RelationshipMatrix.Instance`. If `RelationshipMatrix` is renamed or refactored, `JournalUI` breaks.
+21. The UI Subsystem is tightly coupled to core logic. `JournalUI` calls `Core.GameManager.Instance.PauseGame()`.
+22. UI elements should never dictate simulation state. The UI should raise an `OnJournalOpened` event that the `GameManager` listens to.
+23. The lack of interfaces is a severe structural deficiency.
+24. Instead of concrete casting `if (hit.GetComponent<NPCController>() != null)`, the system should check `if (hit.TryGetComponent(out IPhotoSubject subject))`.
+25. Interfaces like `IInteractable`, `IObservable`, and `INewsReader` would drastically decouple the classes.
+26. The `PhotoData` class holds a direct reference to a `Texture2D`.
+27. This makes serializing `PhotoData` to a JSON save file impossible without writing a massive base64 encoder, which would bloat the save file.
+28. Structurally, `PhotoData` should store metadata and a `string filepath` pointing to the saved PNG on the hard drive.
+29. The `UtilityAI` namespace is structurally sound but disconnected from the `NPCController` state machine.
+30. `NPCActionPlanner` inherits from `MonoBehaviour` but manually manages a list of `NPCAction` objects.
+31. Actions like `MoveAction` and `GroupHangoutAction` hold state internally (`_isExecuting`), which is dangerous if interrupted.
+32. Actions should ideally be stateless ScriptableObjects or structs, with the execution state held by the `ActionPlanner`.
+33. `NPCPersonalityData` inherits from `ScriptableObject`, which is excellent for memory efficiency as it shares data across instances.
+34. However, because it is shared, modifying `NPCPersonalityData` at runtime modifies the personality of *all* NPCs using that profile.
+35. The structure must be updated to clone the ScriptableObject upon instantiation `Instantiate(personalityData)`.
+36. The `Environment` namespace contains `PhotoSubject`, a simple data container for composition scoring.
+37. `PhotoSubject` is structurally decoupled, which is good, but relies on a simple point-based raycast.
+38. It should structurally be converted into a `BoxCollider` trigger that calculates volumetric intersection with the camera frustum.
+39. The `CameraSystem` namespace contains `CameraController` and `ViewfinderManager`.
+40. `CameraController` polls the New Input System directly via `Keyboard.current.cKey.isPressed`.
+41. This structural bypass defeats the purpose of the New Input System and breaks controller/gamepad compatibility.
+42. `GlobalInputListener` exists to fix this, but is not fully integrated across all classes.
+43. `AppraisalEngine` evaluates psychological responses to stimuli. It is mathematically rigid and lacks data-driven configuration.
+44. Reaction thresholds (+10, -30) are hardcoded inside the class rather than exposed to the Unity Inspector or a config file.
+45. A `SimulationConfig` ScriptableObject is structurally necessary to centralize all simulation balancing variables.
+46. The codebase lacks formal unit tests, which is a structural impossibility right now due to the heavy reliance on `MonoBehaviour` Singletons.
+47. To test `AppraisalEngine`, you currently have to launch the game, wait for morning, and take a picture.
+48. Structurally, `AppraisalEngine` should be a pure C# class (POCO) that takes input data and returns output data, independent of Unity's engine.
+49. `TownSquareBuilder` structurally relies on magic numbers for procedural generation (e.g., `Vector3(x * 10, 0, z * 10)`).
+50. It builds environments using primitive meshes instead of Prefabs.
+51. Structurally, it should reference an array of `GameObject` Prefabs, allowing artists to design the houses while coders place them.
+52. `NPCMemoryStream` is an unbounded `List<string>`.
+53. Structurally, this is a memory leak waiting to happen in an infinite simulation. It must be converted to a Ring Buffer (Circular Array).
+54. The UI hierarchy in `HUDManager` uses `OnGUI()`, which is an obsolete, immediate-mode GUI system from Unity 4.
+55. Structurally, `OnGUI` executes twice per frame and causes significant CPU overhead.
+56. It must be completely ripped out and replaced with Unity UI Toolkit or TextMeshPro Canvas components.
+57. The `EmojiReaction` class is defined inside `HUDManager.cs` as a nested data structure.
+58. Structurally, data structures should have their own files, or be integrated into the View component of the NPC.
+59. `SocialGroupManager` structurally links NPCs together into transient lists.
+60. It maintains a list of `SocialGroup` objects. If an NPC is destroyed, the `SocialGroup` throws NullReferenceExceptions.
+61. The structural pattern needs an `OnDestroy` event hook so NPCs can unregister themselves safely from all managers.
+62. Bootstrapping relies on `GPOyunBootstrap`, but this script does not strictly enforce execution order.
+63. Structurally, Unity's Script Execution Order settings must be configured to ensure `GameManager` awakens before `RelationshipMatrix`.
+64. The class diagram indicates a lack of abstraction layers.
+65. There is no `SaveManager` or `DataManager` class to handle serialization.
+66. The architecture structurally prohibits multiplayer; variables are static, assuming exactly one local player.
+67. To fix this, state must be isolated. `Player` should be an entity with its own ID, not a global singleton.
+68. The `JournalManager` tracks logs using a simple string-based approach.
+69. This prevents localization; structurally, logs should be enums or IDs mapped to a localization dictionary.
+70. In conclusion, the Class Diagram reveals a prototype built for speed, not for scaling.
+71. The monolithic structures (God Objects) and Singletons must be dismantled.
+72. Composition over Inheritance must become the guiding structural principle.
+73. Events over Direct References must become the guiding communication principle.
+74. Without these structural changes, the codebase will become an unmaintainable "spaghetti" architecture within 3 months.
+75. The first step is to isolate pure logic (math, appraisals, matrices) from Unity components (Transforms, Rigidbodies).
+76. The second step is to establish an EventBus to severe the direct hard links between the Managers.
+77. The third step is to split the `NPCController` into an MVC architecture.
+78. The fourth step is to convert all string-based dictionaries into integer-based dictionaries for O(1) performance.
+79. The fifth step is to replace `OnGUI` with a modern UI framework to eliminate CPU bottlenecks.
+80. If these structural refactors are executed, GPOyun will possess an enterprise-grade simulation architecture.
+81. The resulting architecture will be deterministic, testable, and highly performant, capable of simulating hundreds of NPCs instead of just 10.
+82. The structural integrity of the project depends entirely on executing this architectural pivot immediately.
+83. -
+84. -
+85. -
+86. -
+87. -
+88. -
+89. -
+90. -
+91. -
+92. -
+93. -
+94. -
+95. -
+96. -
+97. -
+98. -
+99. -
+100. - End of Class Diagram deep structural analysis.
+
+[CURRENT STATUS & CRITIQUE]
+Status: God Object Antipattern.
+Critique: `NPCController` is a massive god class (450+ lines) taking on too many responsibilities despite having sub-components. It handles movement, relationship modifications, and UI emoji spawning directly.

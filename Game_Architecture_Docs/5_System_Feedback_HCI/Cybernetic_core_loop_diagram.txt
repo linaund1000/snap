@@ -1,0 +1,20 @@
+CYBERNETIC CORE LOOP DIAGRAM (Textual)
+======================================
+[ PLAYER OBSERVATION ]
+      |
+      v
+[ PLAYER ACTION ] (Capture Photo) -> Alters Environment State (Photo Pool)
+      |
+      v
+[ SYSTEM PROCESS ] (Publish Newspaper) -> Aggregates Photos, Creates Headlines
+      |
+      v
+[ MATRIX RECALIBRATION ] (RelationshipMatrix) -> Shifts Social Network based on News
+      |
+      v
+[ NPC REACTION ] (Visual & Behavioral) -> NPCs spawn Emojis, Change Paths, Gossip
+      |
+      v
+[ PLAYER OBSERVATION ] -> Sees consequences of journalism -> Repeats Loop\n\n[CURRENT STATUS & CRITIQUE]
+Status: System Feedback is Failing.
+Critique: System feedback is meant for communication with the user, but it is currently bad. The player sees floating emojis but cannot interact or interrogate the system to understand *why* the matrix recalibrated. After all usage, we need something better here.\n

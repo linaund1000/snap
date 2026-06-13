@@ -1,0 +1,102 @@
+TODO & REFACTORING PRIORITIES - DEEP ANALYSIS
+=============================================
+1. The Todo list for GPOyun is not merely a feature backlog; it represents critical architectural rescue operations.
+2. If these Todos are ignored, the project will permanently stall due to technical debt.
+3. Priority 1: Dismantle the Monolithic Singletons.
+4. The `GameManager.Instance`, `TimeManager.Instance`, and `NewspaperManager.Instance` references must be purged from all scripts.
+5. Todo: Implement an Inversion of Control (IoC) Container or a Service Locator to handle dependencies cleanly.
+6. Priority 2: Fix the O(N^2) Relationship Matrix Garbage Collection.
+7. Currently, `RelationshipMatrix.cs` loops through every NPC pair using string concatenation (`npc.NpcId + "_to_" + other.NpcId`).
+8. Todo: Create a composite struct `public struct NPCPair : IEquatable<NPCPair> { public int A; public int B; }`.
+9. Todo: Convert the `Dictionary<string, int>` to `Dictionary<NPCPair, int>`. This eliminates GC allocation in the update loop.
+10. Priority 3: Resolve the Dual-Brain Synchronization Bug.
+11. The `NPCController` Enum state machine (`Idle`, `Wandering`) fights the Utility AI `NPCActionPlanner` (`MoveAction`).
+12. Todo: Rip out the Enum FSM entirely. The Utility AI must have exclusive control over the `NavMeshAgent` and `Animator`.
+13. Priority 4: Implement a Target Inspector UI.
+14. The player currently holds [Tab] to see a massive, unreadable scoreboard of relationships.
+15. Todo: Delete the Tab scoreboard.
+16. Todo: Add a raycast from the camera center. If it hits an NPC, display a localized UI canvas next to them showing their exact stats.
+17. Priority 5: Eliminate the Synchronous I/O Stutter.
+18. When the player takes a picture, `TakePictureUseCase.cs` blocks the main thread to encode a PNG and save it to disk.
+19. Todo: Move `Texture2D.EncodeToPNG()` and `File.WriteAllBytes()` to an asynchronous `Task.Run` background thread.
+20. Priority 6: Establish a Global Event Bus.
+21. Classes currently call each other directly, creating fatal dependencies.
+22. Todo: Create a `ScriptableObject`-based Event Architecture.
+23. Todo: Implement `NewsPublishedEventChannelSO`, `TimePhaseChangedEventChannelSO`, etc.
+24. Priority 7: Implement an Audio Subsystem.
+25. GPOyun completely lacks systemic audio feedback, which is crucial for the cybernetic loop.
+26. Todo: Create an `AudioManager` that listens to the Event Bus and plays spatialized chimes for positive/negative relationship shifts.
+27. Priority 8: Make the Simulation Deterministic.
+28. The game currently uses `Time.deltaTime` and `Random.Range` in `Update` loops, destroying reproducibility.
+29. Todo: Move all mathematical integration for Needs and Relationships to `FixedUpdate`.
+30. Todo: Implement a seeded PRNG (Pseudo-Random Number Generator) for all AI decisions.
+31. Priority 9: Add Composition UI Feedback.
+32. The player aims the camera but does not know why a photo scores a 30 vs a 90.
+33. Todo: Add a Viewfinder reticle that glows green when the `PhotoSubject`'s Interest Bounds intersect the camera center perfectly.
+34. Priority 10: Centralize Magic Numbers.
+35. `AppraisalEngine` uses hardcoded values (+10, -30) for relationship shifts.
+36. Todo: Create a `SimulationConfig.asset` ScriptableObject to store all global tuning variables for designers.
+37. Priority 11: Fix Unbounded Memory Streams.
+38. `NPCMemoryStream` appends to an infinite `List<string>`, causing a slow memory leak.
+39. Todo: Refactor it into a Ring Buffer with a strict maximum capacity (e.g., 50 logs).
+40. Priority 12: Add Editorial Player Agency.
+41. Currently, the system randomly selects a photo category (Scandal, Hero) upon publishing.
+42. Todo: Implement `ComposeEditorialUseCase.cs` to let the player manually assign the Category to manipulate the town.
+43. Priority 13: Decouple Journal UI.
+44. Opening the Journal directly calls `GameManager.PauseGame()`.
+45. Todo: The Journal should be a non-blocking overlay, or it should raise an event that the GameManager optionally listens to.
+46. Priority 14: Flush FSM Dead Ends.
+47. NPCs get stuck in the `WalkingHome` state when the Morning phase arrives.
+48. Todo: Add logic to flush the Utility AI active queue when `TimeManager.OnMorningArrived` fires.
+49. Priority 15: Replace Legacy OnGUI.
+50. Floating emojis are rendered using `OnGUI()`, which is obsolete and heavily unoptimized.
+51. Todo: Implement `TextMeshPro` floating text using world-space canvases attached to NPC heads.
+52. Priority 16: Serialize Simulation State.
+53. The game currently cannot save or load relationship data.
+54. Todo: Implement an `ISaveable` interface for the `RelationshipMatrix` to write the matrix to a local JSON file.
+55. Priority 17: Abstract Procedural Generation.
+56. `TownSquareBuilder` creates primitive cubes for houses, blocking artists from detailing the level.
+57. Todo: Update the builder to instantiate `GameObject` Prefabs loaded via Unity Addressables.
+58. Priority 18: Expand Utility AI Actions.
+59. The `SitAction` is stubbed in the code but has no logic, so NPCs stand around awkwardly.
+60. Todo: Implement `SitAction`, finding nearby benches using Physics Overlap spheres.
+61. Priority 19: Fix the Viewfinder Raycast.
+62. The Viewfinder uses a single geometric point raycast, missing subjects slightly off-center.
+63. Todo: Implement a BoxCast or Frustum-Intersection calculation for robust subject detection.
+64. Priority 20: Handle Dynamic Populations.
+65. `NPCManager` assumes exactly 10 NPCs exist at all times.
+66. Todo: Write robust Add/Remove handlers for NPC death, birth, or departure from the town.
+67. In conclusion, the architecture is a functional prototype but structurally fragile.
+68. Completing this Todo list will transition the codebase from a "student project" into a robust, scalable game engine.
+69. The refactoring must occur in waves. Wave 1 must be Decoupling (Event Bus, IoC).
+70. Wave 2 must be Determinism (FixedUpdate, Seeded PRNG).
+71. Wave 3 must be System Feedback (Target Inspector, Audio).
+72. If we attempt to add new features before completing Wave 1, the technical debt will cause a critical failure.
+73. -
+74. -
+75. -
+76. -
+77. -
+78. -
+79. -
+80. -
+81. -
+82. -
+83. -
+84. -
+85. -
+86. -
+87. -
+88. -
+89. -
+90. -
+91. -
+92. -
+93. -
+94. -
+95. -
+96. -
+97. -
+98. -
+99. -
+100. - End of Todo & Priorities deep analysis.
