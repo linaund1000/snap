@@ -45,15 +45,8 @@ namespace GPOyun.NPC
         {
             if (_animator == null || _controller == null) return;
             
-            bool isWalking = _controller.currentState == NPCState.Wandering ||
-                             _controller.currentState == NPCState.WalkingToBoard ||
-                             _controller.currentState == NPCState.WalkingHome ||
-                             _controller.currentState == NPCState.Fleeing ||
-                             _controller.currentState == NPCState.Socializing ||
-                             _controller.currentState == NPCState.Traveling;
-            
             float targetSpeed = 0f;
-            if (isWalking && _agent != null && !_agent.isStopped && _agent.velocity.sqrMagnitude > 0.01f || _agent.hasPath)
+            if (_agent != null && !_agent.isStopped && (_agent.velocity.sqrMagnitude > 0.01f || _agent.hasPath))
             {
                 targetSpeed = _agent.speed;
             }

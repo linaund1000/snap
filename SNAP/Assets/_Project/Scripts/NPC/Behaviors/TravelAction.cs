@@ -34,15 +34,13 @@ namespace GPOyun.NPC.UtilityAI
         public override IEnumerator Execute()
         {
             _isExecuting = true;
-            Controller.EnterState(NPCState.Traveling);
 
             // Pick a scenic location way outside the village boundaries (radial distance of 24-34m)
             float angle = Random.Range(0f, 360f) * Mathf.Deg2Rad;
             float travelDistance = Random.Range(24f, 34f);
             Vector3 outsideTarget = new Vector3(Mathf.Cos(angle) * travelDistance, transform.position.y, Mathf.Sin(angle) * travelDistance);
 
-            
-            yield return MoveToTarget(outsideTarget, NPCState.Traveling, 1.2f, 8f);
+            yield return MoveToTarget(outsideTarget, 1.2f, 8f);
             if (!_isExecuting) yield break;
             
             Controller.TriggerReaction("[TRAVEL]", new Color(0.4f, 0.8f, 0.4f));
@@ -52,7 +50,6 @@ namespace GPOyun.NPC.UtilityAI
             }
 
                 // Arrived! Stay at the viewpoint and admire the countryside landscape
-                Controller.EnterState(NPCState.Idle);
                 yield return new WaitForSeconds(Random.Range(10f, 18f));
                 
                 // Need fulfilled

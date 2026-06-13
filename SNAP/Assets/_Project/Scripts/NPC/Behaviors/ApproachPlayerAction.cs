@@ -55,7 +55,7 @@ namespace GPOyun.NPC.UtilityAI
                 if (_playerTransform == null) break;
 
                 // Move to player
-                yield return MoveToTarget(_playerTransform.position, NPCState.Wandering, 3.0f, 6f);
+                yield return MoveToTarget(_playerTransform.position, 3.0f, 6f);
                 if (!_isExecuting || _playerTransform == null) break;
 
                 // Face player

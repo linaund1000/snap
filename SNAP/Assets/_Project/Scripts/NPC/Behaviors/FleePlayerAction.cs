@@ -39,12 +39,11 @@ namespace GPOyun.NPC.UtilityAI
                 if (gestures != null) gestures.PlayFear();
 
                 Controller.moveSpeed = Controller.runSpeed;
-                yield return MoveToTarget(targetPosition, NPCState.Fleeing, 1.2f, 3f);
+                yield return MoveToTarget(targetPosition, 1.2f, 3f);
                 Controller.moveSpeed = 1.8f;
 
                 if (!_isExecuting) yield break;
 
-                Controller.EnterState(NPCState.Idle);
                 Needs.IsPlayerNearby = false; 
             }
 

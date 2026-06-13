@@ -46,9 +46,9 @@ namespace GPOyun.CameraSystem
 
                 // 2. Action capture check
                 var controller = mainSubject.GetComponent<NPCController>();
-                if (controller != null)
+                if (controller != null && controller.Brain != null)
                 {
-                    actionBonus = GetActionBonus(controller.currentState);
+                    actionBonus = GetActionBonus(controller.Brain.CurrentAim);
                 }
             }
             else
@@ -78,14 +78,15 @@ namespace GPOyun.CameraSystem
             return photoData;
         }
 
-        private float GetActionBonus(NPCState state)
+        private float GetActionBonus(string aim)
         {
-            return state switch
+            return aim switch
             {
-                NPCState.Hugging => 50f,
-                NPCState.Fleeing => 50f,
-                NPCState.ChillingInGroup => 25f,
-                NPCState.Sitting => 25f,
+                "Socialize" => 50f,
+                "Flee" => 50f,
+                "FleePlayer" => 50f,
+                "GroupHangout" => 25f,
+                "ChillAlone" => 25f,
                 _ => 0f
             };
         }

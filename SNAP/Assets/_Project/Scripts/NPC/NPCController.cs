@@ -8,7 +8,6 @@ using GPOyun.Core;
 
 namespace GPOyun.NPC
 {
-    public enum NPCState { Idle, Wandering, WalkingToBoard, Reading, Reacting, WalkingHome, Sitting, Hugging, Fleeing, ChillingInGroup, Socializing, Traveling }
     public enum EmotionType { Neutral, Happy, Sad, Angry, Fearful, Surprised, Disgusted, Bored }
 
     /// <summary>
@@ -30,7 +29,6 @@ namespace GPOyun.NPC
         public float turnSpeed     = 4f;
 
         [Header("State")]
-        public NPCState  currentState   = NPCState.Idle;
         public EmotionType currentEmotion = EmotionType.Neutral;
 
         [Header("Player Relationship")]
@@ -155,43 +153,7 @@ namespace GPOyun.NPC
 
         // ─── Movement ─────────────────────────────────────────────────────
 
-        // ─── State Machine (Driven entirely by Utility AI now) ────────────
 
-        public void EnterState(NPCState newState)
-        {
-            currentState = newState;
-
-            // Reset slouched sad/sit scales
-            if (newState != NPCState.Sitting)
-            {
-                transform.localScale = Vector3.one;
-            }
-
-            switch (newState)
-            {
-                case NPCState.Reading:
-                    if (boardPosition != null)
-                        transform.rotation = Quaternion.LookRotation(boardPosition.position - transform.position);
-                    ProcessReadNews();
-                    break;
-
-                case NPCState.Idle:
-                    currentEmotion = EmotionType.Neutral;
-                    break;
-
-                case NPCState.Fleeing:
-                    if (_gestures != null) _gestures.PlayFear();
-                    break;
-
-                case NPCState.Hugging:
-                    if (_gestures != null) _gestures.PlayAffection();
-                    break;
-
-                case NPCState.ChillingInGroup:
-                    if (_gestures != null) _gestures.PlayJoy();
-                    break;
-            }
-        }
 
         // ─── External Events ──────────────────────────────────────────────
 

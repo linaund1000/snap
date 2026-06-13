@@ -23,10 +23,8 @@ namespace GPOyun.NPC.UtilityAI
             var board = GameObject.Find("NewspaperBoardInteractable");
             if (board != null)
             {
-                yield return MoveToTarget(board.transform.position, NPCState.WalkingToBoard, 2.5f, 8f);
+                yield return MoveToTarget(board.transform.position, 2.5f, 8f);
                 if (!_isExecuting) yield break;
-
-                Controller.EnterState(NPCState.Reading);
                 Vector3 lookDir = (board.transform.position - transform.position).normalized;
                 lookDir.y = 0;
                 transform.rotation = Quaternion.LookRotation(lookDir);
@@ -37,7 +35,7 @@ namespace GPOyun.NPC.UtilityAI
             }
             else
             {
-                Controller.EnterState(NPCState.Idle);
+
                 Controller.TriggerReaction("❓", Color.yellow);
                 yield return new WaitForSeconds(3f);
                 Needs.SatisfyBoredom(20f);

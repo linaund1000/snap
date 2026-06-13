@@ -110,7 +110,7 @@ namespace GPOyun.NPC.UtilityAI
                 float angle = Random.Range(0, Mathf.PI * 2);
                 targetPos += new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)) * 1.5f;
 
-                yield return MoveToTarget(targetPos, NPCState.Socializing, 1.0f, 5f);
+                yield return MoveToTarget(targetPos, 1.0f, 5f);
                 if (!_isExecuting || (group != null && group.Members.Count <= 1)) break;
 
                 // 4. Stand in the circle and socialize!

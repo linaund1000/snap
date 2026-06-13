@@ -52,10 +52,11 @@ namespace GPOyun.NPC.UtilityAI
                 Mathf.Sin(angle) * dist
             );
 
-            yield return MoveToTarget(scenicSpot, NPCState.Wandering, 0.8f, 8f);
+            yield return MoveToTarget(scenicSpot, 0.8f, 8f);
             if (!_isExecuting) yield break;
 
-            Controller.EnterState(NPCState.Sitting);
+            // Slouch down to simulate sitting
+            Controller.transform.localScale = new Vector3(1f, 0.7f, 1f);
             Controller.TriggerReaction("[CHILL]", new Color(0.6f, 0.9f, 0.9f));
 
             if (GPOyun.Core.JournalManager.Instance != null && Random.value < 0.35f)
@@ -71,8 +72,8 @@ namespace GPOyun.NPC.UtilityAI
                 Needs.SatisfyIntroversion(4.0f * Time.deltaTime);
                 yield return null;
             }
-
-            Controller.EnterState(NPCState.Idle);
+            // Stand back up
+            Controller.transform.localScale = Vector3.one;
             _isExecuting = false;
         }
     }

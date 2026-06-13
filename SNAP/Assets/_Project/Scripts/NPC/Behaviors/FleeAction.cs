@@ -33,13 +33,12 @@ namespace GPOyun.NPC.UtilityAI
                     Vector3 fleeTarget = transform.position + fleeDirection * 15f;
 
                     Controller.moveSpeed = Controller.runSpeed; // Temporarily boost speed
-                    yield return MoveToTarget(fleeTarget, NPCState.Fleeing, 1.2f, 3f);
+                    yield return MoveToTarget(fleeTarget, 1.2f, 3f);
                     Controller.moveSpeed = 1.8f; // Reset
                 }
 
                 if (!_isExecuting) yield break;
 
-                Controller.EnterState(NPCState.Idle);
                 yield return new WaitForSeconds(3f);
 
                 Controller.currentEmotion = EmotionType.Neutral;

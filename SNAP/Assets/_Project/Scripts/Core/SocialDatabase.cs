@@ -61,8 +61,8 @@ namespace GPOyun.Core
                 {
                     NpcId = npc.NpcId,
                     NpcName = npc.NpcName,
-                    CurrentState = npc.currentState.ToString(),
-                    ActiveBehavior = npc.currentState.ToString(),
+                    CurrentState = npc.Brain != null ? npc.Brain.CurrentAim : "Idle",
+                    ActiveBehavior = npc.Brain != null ? npc.Brain.CurrentAim : "Idle",
                     Agreeableness = npc.personality != null ? npc.personality.Agreeableness : 0.5f,
                     Extraversion = npc.personality != null ? npc.personality.Extraversion : 0.5f
                 });

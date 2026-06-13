@@ -126,16 +126,16 @@ namespace GPOyun.NPC.UtilityAI
                     float distToLeader = Vector3.Distance(transform.position, _hangoutGroup.Members[0].transform.position);
                     if (distToLeader > 10f)
                     {
-                        yield return MoveToTarget(_destination, NPCState.Traveling, 1.0f, 6f); // Run to catch up
+                        yield return MoveToTarget(_destination, 1.0f, 6f); // Run to catch up
                     }
                     else
                     {
-                        yield return MoveToTarget(_destination, NPCState.Traveling, 1.0f, 3.5f); // Walk with them
+                        yield return MoveToTarget(_destination, 1.0f, 3.5f); // Walk with them
                     }
                 }
                 else
                 {
-                    yield return MoveToTarget(_destination, NPCState.Traveling, 1.0f, 3.5f); // Leader walks normal pace
+                    yield return MoveToTarget(_destination, 1.0f, 3.5f); // Leader walks normal pace
                 }
 
                 if (!_isExecuting) break;
@@ -150,7 +150,7 @@ namespace GPOyun.NPC.UtilityAI
                 float angle = Random.Range(0, Mathf.PI * 2);
                 Vector3 standPos = _destination + new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)) * 1.5f;
 
-                yield return MoveToTarget(standPos, NPCState.Socializing, 0.5f, 5f);
+                yield return MoveToTarget(standPos, 0.5f, 5f);
 
                 // Face the center
                 Vector3 lookDir = (_destination - transform.position).normalized;

@@ -30,6 +30,17 @@ namespace GPOyun.Core
             return default;
         }
 
+        public static bool TryGet<T>(out T service)
+        {
+            if (_services.TryGetValue(typeof(T), out object obj))
+            {
+                service = (T)obj;
+                return true;
+            }
+            service = default;
+            return false;
+        }
+
         public static void Unregister<T>()
         {
             if (_services.ContainsKey(typeof(T)))

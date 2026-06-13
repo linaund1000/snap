@@ -26,15 +26,15 @@ namespace GPOyun.NPC.UtilityAI
 
             if (Controller.boardPosition != null)
             {
-                yield return MoveToTarget(Controller.boardPosition.position, NPCState.WalkingToBoard, 1.2f, 8f);
+                yield return MoveToTarget(Controller.boardPosition.position, 1.2f, 8f);
                 if (!_isExecuting) yield break;
 
-                Controller.EnterState(NPCState.Reading);
+                // Face the board
+                Controller.transform.rotation = Quaternion.LookRotation(Controller.boardPosition.position - Controller.transform.position);
+                Controller.ProcessReadNews();
                 Needs.HasPendingNews = false;
 
                 yield return new WaitForSeconds(Random.Range(3f, 7f));
-                
-                Controller.EnterState(NPCState.Idle);
             }
 
             _isExecuting = false;

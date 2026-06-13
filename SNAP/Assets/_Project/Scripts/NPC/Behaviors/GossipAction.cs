@@ -38,7 +38,7 @@ namespace GPOyun.NPC.UtilityAI
                     break;
                 }
 
-                yield return MoveToTarget(_targetNPC.transform.position, NPCState.Socializing, 2.0f, 5f);
+                yield return MoveToTarget(_targetNPC.transform.position, 2.0f, 5f);
                 if (!_isExecuting || _targetNPC == null) break;
 
                 Vector3 lookDir = (_targetNPC.transform.position - transform.position).normalized;

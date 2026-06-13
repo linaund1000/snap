@@ -256,7 +256,7 @@ namespace GPOyun.Core
             btnTxt.color = Color.white;
             btnTxt.text = "RESUME GAME";
             btnTxt.alignment = TextAnchor.MiddleCenter;
-            var txtRect = btnTxtGo.AddComponent<RectTransform>();
+            var txtRect = btnTxtGo.GetComponent<RectTransform>();
             txtRect.anchorMin = Vector2.zero;
             txtRect.anchorMax = Vector2.one;
             txtRect.offsetMin = txtRect.offsetMax = Vector2.zero;
@@ -350,7 +350,13 @@ namespace GPOyun.Core
             eye.transform.localScale    = new Vector3(0.1f, 0.1f, 0.1f);
             ApplyAesthetic(eye, Color.black, 0.8f);
             var col = eye.GetComponent<Collider>();
-            if (col != null) UnityEngine.Object.Destroy(col);
+            if (col != null) 
+            {
+                if (Application.isPlaying)
+                    UnityEngine.Object.Destroy(col);
+                else
+                    UnityEngine.Object.DestroyImmediate(col);
+            }
         }
 
         public static void SetupPhotoGallery(GPOyun.UI.PhotoGalleryUI gallery)

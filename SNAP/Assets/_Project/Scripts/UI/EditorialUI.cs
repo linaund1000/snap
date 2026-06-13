@@ -51,9 +51,9 @@ namespace GPOyun.UI
 
         private void CheckTimedAutoOpen()
         {
-            if (GPOyun.Core.ServiceLocator.Get<GPOyun.Managers.TimeManager>() == null) return;
+            if (!GPOyun.Core.ServiceLocator.TryGet<GPOyun.Managers.TimeManager>(out var timeManager)) return;
 
-            float hour = GPOyun.Core.ServiceLocator.Get<GPOyun.Managers.TimeManager>().GetCurrentHour();
+            float hour = timeManager.GetCurrentHour();
             
             if (hour >= 22f && !_wasAutoOpenedToday && !_isExplicitlyOpen)
             {
@@ -73,7 +73,7 @@ namespace GPOyun.UI
             PhotoGalleryUI.Instance?.Hide();
             JournalUI.Instance?.Hide();
 
-            if (GPOyun.Core.ServiceLocator.Get<GPOyun.Core.GameManager>() != null) GPOyun.Core.ServiceLocator.Get<GPOyun.Core.GameManager>().PauseGame();
+            if (GPOyun.Core.ServiceLocator.TryGet<GPOyun.Core.GameManager>(out var gmPause)) gmPause.PauseGame();
 
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
@@ -92,7 +92,7 @@ namespace GPOyun.UI
             if (!_isExplicitlyOpen) return;
             _isExplicitlyOpen = false;
 
-            if (GPOyun.Core.ServiceLocator.Get<GPOyun.Core.GameManager>() != null) GPOyun.Core.ServiceLocator.Get<GPOyun.Core.GameManager>().ResumeGame();
+            if (GPOyun.Core.ServiceLocator.TryGet<GPOyun.Core.GameManager>(out var gmResume)) gmResume.ResumeGame();
 
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;

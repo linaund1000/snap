@@ -15,9 +15,8 @@ namespace GPOyun.NPC.UtilityAI
             _agent = controller.GetComponent<NavMeshAgent>();
         }
 
-        protected IEnumerator MoveToTarget(Vector3 targetPosition, GPOyun.NPC.NPCState walkingState = GPOyun.NPC.NPCState.Wandering, float arrivalDistance = 1.2f, float maxStuckTime = 5f)
+        protected IEnumerator MoveToTarget(Vector3 targetPosition, float arrivalDistance = 1.2f, float maxStuckTime = 5f)
         {
-            Controller.EnterState(walkingState);
 
             bool useNavMesh = (_agent != null && _agent.isOnNavMesh);
 

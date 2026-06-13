@@ -95,12 +95,12 @@ namespace GPOyun.NPC.UtilityAI
                     if (!_isLeader && _walkGroup.Members.Count > 0 && _walkGroup.Members[0] != null)
                     {
                         float distToLeader = Vector3.Distance(transform.position, _walkGroup.Members[0].transform.position);
-                        if (distToLeader > 15f) yield return MoveToTarget(_destination, NPCState.Traveling, 1.0f, 7f); // Sprint
-                        else yield return MoveToTarget(_destination, NPCState.Traveling, 1.0f, 3.5f); // Walk
+                        if (distToLeader > 15f) yield return MoveToTarget(_destination, 1.0f, 7f); // Sprint
+                        else yield return MoveToTarget(_destination, 1.0f, 3.5f); // Walk
                     }
                     else
                     {
-                        yield return MoveToTarget(_destination, NPCState.Traveling, 1.0f, 3.5f);
+                        yield return MoveToTarget(_destination, 1.0f, 3.5f);
                     }
 
                     if (!_isExecuting) break;

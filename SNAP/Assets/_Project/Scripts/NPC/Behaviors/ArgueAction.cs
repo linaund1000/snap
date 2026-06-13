@@ -40,7 +40,7 @@ namespace GPOyun.NPC.UtilityAI
                 if (_targetNPC == null) break;
 
                 // Stomp over to the enemy
-                yield return MoveToTarget(_targetNPC.transform.position, NPCState.Wandering, 2.0f, 5f);
+                yield return MoveToTarget(_targetNPC.transform.position, 2.0f, 5f);
                 if (!_isExecuting || _targetNPC == null) break;
 
                 // Face them

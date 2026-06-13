@@ -23,11 +23,9 @@ namespace GPOyun.NPC.UtilityAI
         {
             _isExecuting = true;
 
-            yield return MoveToTarget(Controller.homePosition, NPCState.WalkingHome, 1.2f, 8f);
+            yield return MoveToTarget(Controller.homePosition, 1.2f, 8f);
             if (!_isExecuting) yield break;
 
-            Controller.EnterState(NPCState.Idle);
-            
             while (_isExecuting && Needs.IsNightTime)
             {
                 Needs.RestoreEnergy(3.0f * Time.deltaTime);
