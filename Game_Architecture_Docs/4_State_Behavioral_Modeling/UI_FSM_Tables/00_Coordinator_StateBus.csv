@@ -1,0 +1,7 @@
+SourceMachine,EmittedEvent,TargetMachine,ActionToTrigger
+InputRouter,Global_ForceClose,Journal_Machine,ForceTransition(Closed)
+InputRouter,Global_ForceClose,Gallery_Machine,ForceTransition(Closed)
+InputRouter,Global_ForceClose,Board_Machine,ForceTransition(Closed)
+InputRouter,Global_ForceClose,Settings_Machine,ForceTransition(Closed)
+Journal_Machine,Open_Matrix,Gallery_Machine,Global_ForceClose
+Gallery_Machine,Open,Journal_Machine,Global_ForceClose

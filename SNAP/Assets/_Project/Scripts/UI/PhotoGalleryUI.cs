@@ -64,10 +64,10 @@ namespace GPOyun.UI
             EditorialUI.Instance?.Hide();
             NewspaperBoardUI.Instance?.Hide();
 
-            if (GPOyun.Core.ServiceLocator.Get<GPOyun.Core.GameManager>() != null) GPOyun.Core.ServiceLocator.Get<GPOyun.Core.GameManager>().PauseGame();
+            GPOyun.UI.UIManager.Instance?.PushMenu(gameObject);
 
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible   = true;
+            
+            
             Apply(1f, true, true);
             RefreshThumbnails();
             Debug.Log("[Gallery] Opened.");
@@ -78,7 +78,7 @@ namespace GPOyun.UI
             if (!_isOpen) return;
             _isOpen = false;
 
-            if (GPOyun.Core.ServiceLocator.Get<GPOyun.Core.GameManager>() != null) GPOyun.Core.ServiceLocator.Get<GPOyun.Core.GameManager>().ResumeGame();
+            GPOyun.UI.UIManager.Instance?.PopMenu(gameObject);
 
             Apply(0f, false, false);
             Debug.Log("[Gallery] Closed.");

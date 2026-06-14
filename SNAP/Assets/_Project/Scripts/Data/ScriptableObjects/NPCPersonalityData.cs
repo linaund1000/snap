@@ -25,11 +25,32 @@ namespace GPOyun
 
         public NewsReaction GetReactionTo(NewsCategory category)
         {
-            foreach (var rule in reactionRules)
-                if (rule.Category == category) return rule.Reaction;
+            if (reactionRules != null)
+            {
+                foreach (var rule in reactionRules)
+                    if (rule.Category == category) return rule.Reaction;
+            }
 
             // Default fallback: neutral
             return new NewsReaction { Emotion = EmotionType.Neutral, Intensity = 0f };
+        }
+
+        /// <summary>
+        /// Creates a unique instance of this personality by adding random variance to each trait.
+        /// This ensures NPCs sharing a base profile feel authentic.
+        /// </summary>
+        public NPCPersonalityData CreateVariant(float variance)
+        {
+            var variant = Instantiate(this);
+            variant.name = this.name + "_Variant";
+
+            variant.Agreeableness = Mathf.Clamp01(Agreeableness + UnityEngine.Random.Range(-variance, variance));
+            variant.Neuroticism = Mathf.Clamp01(Neuroticism + UnityEngine.Random.Range(-variance, variance));
+            variant.Conscientiousness = Mathf.Clamp01(Conscientiousness + UnityEngine.Random.Range(-variance, variance));
+            variant.Extraversion = Mathf.Clamp01(Extraversion + UnityEngine.Random.Range(-variance, variance));
+            variant.Openness = Mathf.Clamp01(Openness + UnityEngine.Random.Range(-variance, variance));
+
+            return variant;
         }
     }
 

@@ -156,11 +156,18 @@ namespace GPOyun.Core
             }
 
             // Ensure Centralized Input Listener
-            if (Object.FindAnyObjectByType<GPOyun.InputSystem.GlobalInputListener>() == null)
+            if (Object.FindAnyObjectByType<GPOyun.Core.FSM.InputRouter>() == null)
             {
-                var inputGo = new GameObject("GlobalInputListener");
+                var inputGo = new GameObject("InputRouter");
                 inputGo.transform.SetParent(uiRoot.transform);
-                inputGo.AddComponent<GPOyun.InputSystem.GlobalInputListener>();
+                inputGo.AddComponent<GPOyun.Core.FSM.InputRouter>();
+            }
+
+            if (Object.FindAnyObjectByType<GPOyun.Core.FSM.JournalMachine>() == null)
+            {
+                var journalFsm = new GameObject("JournalMachine");
+                journalFsm.transform.SetParent(uiRoot.transform);
+                journalFsm.AddComponent<GPOyun.Core.FSM.JournalMachine>();
             }
 
             // Ensure EventSystem
@@ -422,9 +429,14 @@ namespace GPOyun.Core
             boardUiGo.AddComponent<NewspaperBoardUI>();
 
             // Centralized high-reliability input listener
-            var inputGo = new GameObject("GlobalInputListener");
+            var inputGo = new GameObject("InputRouter");
             inputGo.transform.SetParent(uiRoot.transform);
-            inputGo.AddComponent<GPOyun.InputSystem.GlobalInputListener>();
+            inputGo.AddComponent<GPOyun.Core.FSM.InputRouter>();
+
+            // UI State Machines
+            var journalFsm = new GameObject("JournalMachine");
+            journalFsm.transform.SetParent(uiRoot.transform);
+            journalFsm.AddComponent<GPOyun.Core.FSM.JournalMachine>();
 
             // EventSystem for UI interactions (GraphicRaycaster support)
             var eventSystemGo = new GameObject("EventSystem");

@@ -11,34 +11,6 @@ namespace GPOyun.NPC.UtilityAI
             ActionName = "ChillAlone";
         }
 
-        public override float CalculateUtility()
-        {
-            float utility = BaseUtility;
-            if (Controller.Brain != null)
-            {
-                // Setpoint Minimization (Homeostasis)
-                float currentDeficit = Mathf.Abs(Needs.Introversion - Controller.Brain.ComfortZone.IdealIntroversion);
-                float predictedDeficit = Controller.Brain.ComfortZone.IdealIntroversion; // Because chilling drops Introversion towards 0
-
-                if (currentDeficit > predictedDeficit)
-                {
-                    utility += (currentDeficit - predictedDeficit) * 1.5f;
-                }
-                else
-                {
-                    // Behavioral Degradation: Chilling right now would pull us away from our comfort zone!
-                    // e.g. A Drama Addict won't want to chill if they are currently at their ideal high stress!
-                    utility -= (predictedDeficit - currentDeficit) * 2f;
-                }
-            }
-            else
-            {
-                utility += (Needs.Introversion * 0.8f);
-            }
-
-            if (Needs.Energy < 30f) utility += 20f; 
-            return Mathf.Max(0, utility);
-        }
 
         public override IEnumerator Execute()
         {

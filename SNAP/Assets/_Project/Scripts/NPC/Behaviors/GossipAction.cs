@@ -14,15 +14,6 @@ namespace GPOyun.NPC.UtilityAI
             ActionName = "Gossip";
         }
 
-        public override float CalculateUtility()
-        {
-            var memoryStream = Controller.GetComponent<Memory.NPCMemoryStream>();
-            if (memoryStream != null && memoryStream.GetMemorySnapshot().Count > 0)
-            {
-                return BaseUtility + (Needs.SocialDesire * 0.7f);
-            }
-            return 0f;
-        }
 
         public override IEnumerator Execute()
         {

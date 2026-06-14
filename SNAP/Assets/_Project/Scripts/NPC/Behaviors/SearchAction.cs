@@ -11,10 +11,6 @@ namespace GPOyun.NPC.UtilityAI
             ActionName = "Search";
         }
 
-        public override float CalculateUtility()
-        {
-            return BaseUtility + (Needs.Boredom * 0.6f);
-        }
 
         public override IEnumerator Execute()
         {

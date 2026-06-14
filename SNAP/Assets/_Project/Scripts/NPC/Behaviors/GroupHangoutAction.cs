@@ -17,32 +17,6 @@ namespace GPOyun.NPC.UtilityAI
             ActionName = "GroupHangout";
         }
 
-        public override float CalculateUtility()
-        {
-            // Only trigger if we have very high social desire and decent energy
-            if (Needs.SocialDesire < 60f || Needs.Energy < 30f) return 0f;
-
-            // Wait, this is a complex action. Are there 2 other friends nearby?
-            Collider[] hits = Physics.OverlapSphere(transform.position, 25f);
-            int friendsCount = 0;
-
-            foreach (var hit in hits)
-            {
-                var otherNpc = hit.GetComponentInParent<NPCController>();
-                if (otherNpc != null && otherNpc != Controller)
-                {
-                    int relation = GPOyun.Core.ServiceLocator.Get<GPOyun.Core.RelationshipMatrix>() != null ? 
-                        GPOyun.Core.ServiceLocator.Get<GPOyun.Core.RelationshipMatrix>().GetRelationship(Controller.NpcId, otherNpc.NpcId) : 0;
-                    
-                    if (relation >= 40) friendsCount++;
-                }
-            }
-
-            // Only highly motivated to initiate a group hangout if we have friends around
-            if (friendsCount >= 2) return BaseUtility + Needs.SocialDesire * 1.2f;
-
-            return 0f;
-        }
 
         public override IEnumerator Execute()
         {

@@ -11,12 +11,6 @@ namespace GPOyun.NPC.UtilityAI
             ActionName = "Wander";
         }
 
-        public override float CalculateUtility()
-        {
-            float utility = BaseUtility + (Needs.Boredom * 0.8f);
-            if (Needs.Energy < 20f) utility -= 30f;
-            return Mathf.Max(0, utility);
-        }
 
         public override IEnumerator Execute()
         {

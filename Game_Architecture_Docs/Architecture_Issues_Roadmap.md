@@ -1,29 +1,26 @@
 # Game Architecture Issues & Refactoring Roadmap
 
+Bu belge, oyunun mimari sorunlarını, UX (Kullanıcı Deneyimi) eksiklerini ve gelecekteki refactor (yeniden yapılandırma) planlarını barındırır. Yeni FSM ve Live Feed tasarımı sonrası güncellenmiştir.
+
+## Aktif Görev Listesi (Suana Kadar Yapilmayanlar & Yeni Eklenenler)
+
 PRIORITY | ISSUE_NAME | DESCRIPTION | REFERENCED_FILES | ACTION_PLAN
 ---|---|---|---|---
-[DONE] High | Singleton_Coupling | Core managers tightly coupled; testing impossible. | GameManager.cs, TimeManager.cs | Remove Instance accessors. Implement IoC Container.
-High | Synchronous_IO_Stutter | Capturing photos blocks main thread, freezing game. | TakePictureUseCase.cs, CameraController.cs | [DONE] Move Texture2D.EncodeToPNG to async Task.Run.
-High | Matrix_Garbage_Collection | String concatenation in relationship matrix causes memory spikes. | RelationshipMatrix.cs | [DONE] Replace string keys with struct NPCPair.
-High | Dual_Brain_Desynchronization | Enum state and Utility AI drift out of sync. | NPCController.cs, NPCActionPlanner.cs | Replace Enum FSM with GOAP or Behavior Tree.
-High | Missing_System_Feedback | Player cannot interrogate NPC state without clunky UI. | HUDManager.cs, JournalUI.cs | Implement Target Inspector UI via raycast.
-High | Unseeded_RNG_Logic | Random.Range used in Utility AI, destroying determinism. | NPCActionPlanner.cs, NewspaperManager.cs | Instantiate global PRNG with fixed master seed.
-Med | Non_Deterministic_Timing | Integration relies on Time.deltaTime in Update loops. | TimeManager.cs, NPCNeeds.cs | Move simulation logic to FixedUpdate.
-Med | Blocking_UI_Coupling | Opening journal directly pauses the simulation loop. | JournalUI.cs, GameManager.cs | Implement global EventBus (OnJournalOpened).
-Med | Hardcoded_Magic_Numbers | Emotional deltas (+10, -30) are hardcoded. | AppraisalEngine.cs | Extract to SimulationConfig.asset ScriptableObject.
-Med | Unbounded_Memory_Streams | NPC logs append infinitely to List, causing memory leak. | NPCMemoryStream.cs | Convert List<string> to fixed-size Ring Buffer.
-Med | Missing_Composition_Feedback | Player doesn't know why a photo scored poorly during aiming. | ViewfinderManager.cs, PhotoScorer.cs | Add UI reticle glowing based on InterestLevel frustum intersection.
-Low | Legacy_OnGUI_Usage | Emoji reactions use obsolete Unity 4 UI methods. | HUDManager.cs | Replace OnGUI with TextMeshPro Canvas objects.
-Low | Dead_End_Transitions | NPCs trapped in WalkingHome state when morning arrives. | NPCController.cs, MoveAction.cs | Flush active queue on TimeManager.OnMorningArrived.
-Low | Procedural_Gen_Stagnation | Town built via code primitives, blocking level designers. | TownSquareBuilder.cs | Replace GameObject.CreatePrimitive with Prefab Instantiation.
-Low | Missing_Audio_Cues | Systemic feedback lacks spatial audio confirmation. | None (Missing System) | Create AudioManager listening to EventBus.
-[DONE] High | Cognitive_Engine_Missing | NPCs lack persistent memory of aims, contexts, and complex emotions. | NPCBrain.cs (New), NPCNeeds.cs | Create unified NPCBrain to map Needs -> Aims/Emotions.
-[DONE] High | Static_Emojis | Emojis are purely visual and do not affect the simulation. | HUDManager.cs, NPCBrain.cs | Convert emojis to physical AoE raycasts affecting nearby brains.
-[DONE] High | Predictable_Utility | NPCs always pick optimal actions, feeling robotic. | NPCActionPlanner.cs | Implement 'Whim' Chaos Multiplier (5% base chance).
+🚨 **CRITICAL** | Global_UI_Input_FSM | Girdiler (Input) hala spagetti if-else bloklarıyla çalışıyor. Kamera açılırken menülerin üst üste binmesi gibi UX hatalarına açık. | `GlobalInputListener.cs`, `UIManager.cs` | Yeni tasarlanan `Global_UI_State_Transition_Matrix.md` anayasasına göre UIManager ve GlobalInputListener'ı "State Machine" yapısına geçir. `Override` ve `Block` mantıklarını kodla.
+🚨 **CRITICAL** | Endless_Live_Ticker_UI | `GlobalEventLogger` verileri sadece Journal açılınca gözüküyor. Emojiler ve küçük olayların Twitch Chat gibi kenarda akması lazım. | `HUDManager.cs`, `GlobalEventLogger.cs` | Ekranın sol alt köşesine kaybolan/akan (fading scroll) bir metin kutusu ekle. Dünya yaşıyor hissini canlı tut.
+High | Viewfinder_Composition_Feedback | Oyuncu kamerayla bir NPC'ye bakarken fotoğrafın "iyi/ilginç" olup olmayacağını vizörden (crosshair) anlayamıyor. | `PhotoScorer.cs`, `ViewfinderManager.cs` | Vizörün rengini (Örn: Yeşile dönme) hedefin InterestLevel skoruna göre anlık değiştir (Raycast veya Frustum intersection).
+High | Unbounded_Memory_Streams | NPC logları `List<MemoryEvent>` içine sonsuza kadar yazılıyor. 3 günlük simülasyon sonunda RAM sızıntısı (Memory Leak) yapabilir. | `NPCMemoryStream.cs`, `GlobalEventLogger.cs` | Listeleri Ring Buffer mantığına çevir. Max 50/100 eleman tutulsun. Eski olaylar silinsin.
+High | Missing_Audio_Cues | Oyunda sistemik geri bildirimlerin (Fotoğraf çekme, emoji atma, ilişki kırılması) hiç sesi yok. | Yeni Sistem | `EventBus` veya Observer üzerinden çalışacak bir `AudioManager` yarat ve uzamsal (spatial) sesleri bağla.
+Med | Editorial_Agency_Validation | Gazete çıkarma ekranı var (`EditorialUI`) ama oyuncu bu fotoğrafları çöpe atabiliyor mu? Kategori seçebiliyor mu? Bağlantıları zayıf. | `EditorialUI.cs`, `NewspaperManager.cs` | Fotoğrafların manuel kategorize edilmesi (Scandal, Heartwarming) sisteminin test edilmesi ve eksiklerin giderilmesi.
+Low | Procedural_Gen_Stagnation | Kasaba kodla üretilen küplerden ibaret (`TownSquareBuilder.cs`). Seviye tasarımcıları sahnede çalışamıyor. | `TownSquareBuilder.cs` | Primitive objeler yerine gerçek Prefab (Ev, Ağaç, Bank) Instantiation sistemine geç.
 
-## What is Missing (Architectural Gaps)
-1. **Audio Subsystem:** Completely missing. Audio is fragmented PlayOneShot calls.
-2. **Serialization Layer:** No ISaveable interfaces. Simulation resets every time the game is closed.
-3. **Event Bus / PubSub System:** Missing entirely. Systems communicate via direct Singleton method calls.
-4. **Editorial UI:** Missing ComposeEditorialUseCase; player forced to publish everything they shoot.
-5. **Dynamic Population Handler:** Assumes exactly 10 NPCs. Missing logic for death, birth, or departure.
+---
+
+## 🛑 Daha Önce Tamamlanan Kritik İşler (Geçmiş Zaferler)
+- `[DONE]` **Dual_Brain_Desynchronization:** Enum state'ler yıkıldı, tam teşekküllü UtilityAI ve NPCBrain sistemi kuruldu.
+- `[DONE]` **Missing_System_Feedback:** Hedefe bakıldığında bilgileri gösteren `TargetInspectorUI` yazıldı.
+- `[DONE]` **Matrix_Garbage_Collection:** RelationshipMatrix string birleştirmelerinden kurtarılıp performanslı Struct'lara çevrildi.
+- `[DONE]` **Synchronous_IO_Stutter:** Fotoğraf çekimi (EncodeToPNG) asenkron Task'a taşındı, anlık takılmalar önlendi.
+- `[DONE]` **Predictable_Utility:** Yapay zekaya "Whim" (Kaos) çarpanı eklendi, robotik hareketler kırıldı.
+- `[DONE]` **Static_Emojis:** Emojiler görsel olmaktan çıkıp (AoE SphereCast ile) fiziksel etki bırakan bir "Büyü/Etki"ye (`ProcessEmojiStimulus`) dönüştürüldü.
+- `[DONE]` **Multi-State_Journal:** Journal UI artık tüm ekranı kör etmeyen, state machine (Matrix -> Feed -> Focus) ile çalışan akıcı bir FSM tabanlı sisteme geçirildi.

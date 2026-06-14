@@ -247,7 +247,7 @@ namespace GPOyun.Core
             var btn = resumeGo.AddComponent<Button>();
             btn.onClick.AddListener(settings.ToggleSettings);
 
-            GameObject btnTxtGo = new GameObject("Label");
+            GameObject btnTxtGo = new GameObject("Label", typeof(RectTransform));
             btnTxtGo.transform.SetParent(resumeGo.transform, false);
             var btnTxt = btnTxtGo.AddComponent<Text>();
             btnTxt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
@@ -262,7 +262,7 @@ namespace GPOyun.Core
             txtRect.offsetMin = txtRect.offsetMax = Vector2.zero;
 
             // Instructions
-            GameObject hintGo = new GameObject("HintText");
+            GameObject hintGo = new GameObject("HintText", typeof(RectTransform));
             hintGo.transform.SetParent(canvas.transform, false);
             Text hint = hintGo.AddComponent<Text>();
             hint.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");

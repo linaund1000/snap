@@ -14,7 +14,23 @@ namespace GPOyun.Environment
         [Header("Settings")]
         public float scaleFactor = 1.0f;
         
-        [ContextMenu("Build Mediterranean Square")]
+        [ContextMenu("1. Generate NPC Prefabs")]
+        public void GeneratePrefabs()
+        {
+#if UNITY_EDITOR
+            GPOyun.EditorScripts.NPCPrefabGenerator.GeneratePrefabs();
+#endif
+        }
+
+        [ContextMenu("1.5 Generate Environment Prefabs")]
+        public void GenerateEnvironmentPrefabs()
+        {
+#if UNITY_EDITOR
+            GPOyun.EditorScripts.EnvironmentPrefabGenerator.GeneratePrefabs();
+#endif
+        }
+
+        [ContextMenu("2. Build Mediterranean Square")]
         public void Build()
         {
             // Reset self-alignment to prevent "Crushed" layout
@@ -53,24 +69,41 @@ namespace GPOyun.Environment
             CreateHouse("Residence_B", new Vector3(25, 0, 0), new Vector3(5, 5, 9), VisualUtils.StuccoWhite, VisualUtils.CobaltBlue);
 
             // 5. CLOCK TOWER (Landmark)
-            GameObject tower = CreatePrimitive(PrimitiveType.Cube, "ClockTower", new Vector3(18, 8f, 18), new Vector3(4f, 16, 4f));
-            VisualUtils.ApplyAesthetic(tower, VisualUtils.StuccoWhite);
-            GameObject towerTop = CreatePrimitive(PrimitiveType.Cube, "TowerCap", new Vector3(18, 16.5f, 18), new Vector3(4.5f, 1, 4.5f));
-            VisualUtils.ApplyAesthetic(towerTop, VisualUtils.CobaltBlue);
-            
-            var towerSubject = tower.AddComponent<PhotoSubject>();
-            towerSubject.PrimaryCategory = GPOyun.Newspaper.NewsCategory.Global;
+            GameObject towerPrefab = Resources.Load<GameObject>("Environment/ClockTower");
+            if (towerPrefab != null)
+            {
+                Instantiate(towerPrefab, new Vector3(18, 0, 18), Quaternion.identity, this.transform);
+            }
+            else
+            {
+                GameObject tower = CreatePrimitive(PrimitiveType.Cube, "ClockTower", new Vector3(18, 8f, 18), new Vector3(4f, 16, 4f));
+                VisualUtils.ApplyAesthetic(tower, VisualUtils.StuccoWhite);
+                GameObject towerTop = CreatePrimitive(PrimitiveType.Cube, "TowerCap", new Vector3(18, 16.5f, 18), new Vector3(4.5f, 1, 4.5f));
+                VisualUtils.ApplyAesthetic(towerTop, VisualUtils.CobaltBlue);
+                
+                var towerSubject = tower.AddComponent<PhotoSubject>();
+                towerSubject.PrimaryCategory = GPOyun.Newspaper.NewsCategory.Global;
+            }
 
-            GameObject fBase = CreatePrimitive(PrimitiveType.Cylinder, "Fountain_Base", Vector3.zero, new Vector3(5, 0.4f, 5));
-            VisualUtils.ApplyAesthetic(fBase, VisualUtils.SlateGrey);
-            GameObject water = CreatePrimitive(PrimitiveType.Cylinder, "Water", new Vector3(0, 0.3f, 0), new Vector3(4.5f, 0.1f, 4.5f));
-            VisualUtils.ApplyAesthetic(water, VisualUtils.FountainBlue, 0.9f);
+            // Fountain
+            GameObject fountainPrefab = Resources.Load<GameObject>("Environment/Fountain");
+            if (fountainPrefab != null)
+            {
+                Instantiate(fountainPrefab, Vector3.zero, Quaternion.identity, this.transform);
+            }
+            else
+            {
+                GameObject fBase = CreatePrimitive(PrimitiveType.Cylinder, "Fountain_Base", Vector3.zero, new Vector3(5, 0.4f, 5));
+                VisualUtils.ApplyAesthetic(fBase, VisualUtils.SlateGrey);
+                GameObject water = CreatePrimitive(PrimitiveType.Cylinder, "Water", new Vector3(0, 0.3f, 0), new Vector3(4.5f, 0.1f, 4.5f));
+                VisualUtils.ApplyAesthetic(water, VisualUtils.FountainBlue, 0.9f);
 
-            var fountainObstacle = fBase.AddComponent<UnityEngine.AI.NavMeshObstacle>();
-            fountainObstacle.shape = UnityEngine.AI.NavMeshObstacleShape.Capsule;
-            fountainObstacle.carving = true;
-            fountainObstacle.radius = 2.5f;
-            fountainObstacle.height = 1f;
+                var fountainObstacle = fBase.AddComponent<UnityEngine.AI.NavMeshObstacle>();
+                fountainObstacle.shape = UnityEngine.AI.NavMeshObstacleShape.Capsule;
+                fountainObstacle.carving = true;
+                fountainObstacle.radius = 2.5f;
+                fountainObstacle.height = 1f;
+            }
 
             // Benches around fountain
             CreateBench(new Vector3(0, 0.5f, 6.0f), 0);
@@ -79,12 +112,21 @@ namespace GPOyun.Environment
             CreateBench(new Vector3(-6.0f, 0.5f, 0), 90);
 
             // 6. NEWSPAPER BOARD (Modern accent)
-            GameObject board = CreatePrimitive(PrimitiveType.Cube, "NewspaperBoard", new Vector3(10, 1.5f, -6), new Vector3(0.3f, 3f, 5f));
-            VisualUtils.ApplyAesthetic(board, VisualUtils.WoodBrown);
+            GameObject board = null;
+            GameObject boardPrefab = Resources.Load<GameObject>("Environment/NewspaperBoard");
+            if (boardPrefab != null)
+            {
+                board = Instantiate(boardPrefab, new Vector3(10, 0, -6), Quaternion.identity, this.transform);
+            }
+            else
+            {
+                board = CreatePrimitive(PrimitiveType.Cube, "NewspaperBoard", new Vector3(10, 1.5f, -6), new Vector3(0.3f, 3f, 5f));
+                VisualUtils.ApplyAesthetic(board, VisualUtils.WoodBrown);
 
-            var boardObstacle = board.AddComponent<UnityEngine.AI.NavMeshObstacle>();
-            boardObstacle.shape = UnityEngine.AI.NavMeshObstacleShape.Box;
-            boardObstacle.carving = true;
+                var boardObstacle = board.AddComponent<UnityEngine.AI.NavMeshObstacle>();
+                boardObstacle.shape = UnityEngine.AI.NavMeshObstacleShape.Box;
+                boardObstacle.carving = true;
+            }
 
             // 7. FLOWER POTS (Scattered life)
             CreateFlowerPot(new Vector3(-8, 0.5f, 8));
@@ -102,7 +144,14 @@ namespace GPOyun.Environment
 
         private void CreateHouse(string name, Vector3 pos, Vector3 size, Color wallCol, Color roofCol)
         {
-            GameObject container = new GameObject(name);
+            GameObject prefab = Resources.Load<GameObject>($"Environment/House_{name}");
+            if (prefab != null)
+            {
+                Instantiate(prefab, pos, Quaternion.identity, this.transform);
+                return;
+            }
+
+            GameObject container = new GameObject($"House_{name}");
             container.transform.SetParent(this.transform);
             container.transform.localPosition = pos;
             container.layer = 7; // COLLISION LAYER
@@ -139,6 +188,13 @@ namespace GPOyun.Environment
 
         private void CreateBench(Vector3 pos, float rotationY)
         {
+            GameObject prefab = Resources.Load<GameObject>("Environment/Bench");
+            if (prefab != null)
+            {
+                Instantiate(prefab, pos, Quaternion.Euler(0, rotationY, 0), this.transform);
+                return;
+            }
+
             GameObject bench = new GameObject("Bench");
             bench.transform.SetParent(this.transform);
             bench.transform.localPosition = pos;
@@ -155,6 +211,13 @@ namespace GPOyun.Environment
 
         private void CreateFlowerPot(Vector3 pos)
         {
+            GameObject prefab = Resources.Load<GameObject>("Environment/FlowerPot");
+            if (prefab != null)
+            {
+                Instantiate(prefab, pos, Quaternion.identity, this.transform);
+                return;
+            }
+
             GameObject container = new GameObject("FlowerPot_Container");
             container.transform.SetParent(this.transform);
             container.transform.localPosition = pos;
@@ -168,6 +231,13 @@ namespace GPOyun.Environment
 
         private void CreateTree(Vector3 pos)
         {
+            GameObject prefab = Resources.Load<GameObject>("Environment/CypressTree");
+            if (prefab != null)
+            {
+                Instantiate(prefab, pos, Quaternion.identity, this.transform);
+                return;
+            }
+
             GameObject tree = new GameObject("CypressTree");
             tree.transform.SetParent(this.transform);
             tree.transform.localPosition = pos;
@@ -192,6 +262,22 @@ namespace GPOyun.Environment
             float angle = (id * 60f) * Mathf.Deg2Rad;
             Vector3 spawnPos = new Vector3(Mathf.Cos(angle) * 8f, 1f, Mathf.Sin(angle) * 8f);
             
+            string[] names = new string[] {
+                "Leo", "Zoe", "Max", "Mia", "Eli", "Ava", "Kai", "Ivy", "Rex", "Sol"
+            };
+            string npcName = names[id % names.Length];
+
+            // Önce Resources klasöründen prefab yüklemeyi dene
+            GameObject prefab = Resources.Load<GameObject>($"NPCs/NPC_{id}_{npcName}");
+            if (prefab != null)
+            {
+                GameObject npcInstance = Instantiate(prefab, spawnPos, Quaternion.identity, this.transform);
+                NPCController ctrl = npcInstance.GetComponent<NPCController>();
+                if (ctrl != null) ctrl.boardPosition = board;
+                return; // Başarılıysa fonksiyondan çık, alttaki eski (kodla oluşturma) çalışmasın
+            }
+
+            // Eğer prefab bulunamazsa (henüz Generate edilmediyse), eski yöntemle oluştur (Fallback)
             GameObject npcGroup = new GameObject($"NPC_{id}");
             npcGroup.transform.SetParent(this.transform);
             npcGroup.transform.localPosition = spawnPos;
@@ -225,10 +311,7 @@ namespace GPOyun.Environment
             
             NPCController controller = npcGroup.AddComponent<NPCController>();
             controller.NpcId = id;
-            string[] names = new string[] {
-                "Leo", "Zoe", "Max", "Mia", "Eli", "Ava", "Kai", "Ivy", "Rex", "Sol"
-            };
-            controller.NpcName = names[id % names.Length];
+            controller.NpcName = npcName;
             controller.boardPosition = board;
             
             // Add visual helper

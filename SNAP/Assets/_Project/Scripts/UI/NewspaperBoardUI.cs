@@ -65,10 +65,10 @@ namespace GPOyun.UI
             JournalUI.Instance?.Hide();
             EditorialUI.Instance?.Hide();
 
-            if (GPOyun.Core.ServiceLocator.Get<GPOyun.Core.GameManager>() != null) GPOyun.Core.ServiceLocator.Get<GPOyun.Core.GameManager>().PauseGame();
+            GPOyun.UI.UIManager.Instance?.PushMenu(gameObject);
 
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
+            
+            
 
             RefreshDisplay();
             Apply(1f, true, true);
@@ -80,10 +80,10 @@ namespace GPOyun.UI
             if (!_isOpen) return;
             _isOpen = false;
 
-            if (GPOyun.Core.ServiceLocator.Get<GPOyun.Core.GameManager>() != null) GPOyun.Core.ServiceLocator.Get<GPOyun.Core.GameManager>().ResumeGame();
+            GPOyun.UI.UIManager.Instance?.PopMenu(gameObject);
 
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
+            
+            
             Apply(0f, false, false);
             Debug.Log("[NewspaperBoardUI] Closed.");
         }

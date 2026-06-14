@@ -11,14 +11,6 @@ namespace GPOyun.NPC.UtilityAI
             ActionName = "ReadNews";
         }
 
-        public override float CalculateUtility()
-        {
-            if (Needs.HasPendingNews && Controller.boardPosition != null)
-            {
-                return 100f; 
-            }
-            return 0f;
-        }
 
         public override IEnumerator Execute()
         {

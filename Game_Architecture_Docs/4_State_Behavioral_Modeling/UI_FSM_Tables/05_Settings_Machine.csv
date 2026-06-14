@@ -1,0 +1,4 @@
+CurrentState,InputTrigger,Condition,NextState,OutputAction
+Closed,Input_Esc_Press,None,Open,ShowSettingsUI
+Open,Input_Esc_Press,None,Closed,HideSettingsUI
+*,Global_ForceClose,None,Closed,HideSettingsUI

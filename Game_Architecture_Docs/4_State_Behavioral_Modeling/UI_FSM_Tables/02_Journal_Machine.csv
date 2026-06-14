@@ -1,0 +1,7 @@
+CurrentState,InputTrigger,Condition,NextState,OutputAction
+Closed,Input_J_Press,NoTarget,Open_Matrix,ShowMatrixUI
+Closed,Input_J_Press,HasTarget,Open_Focus,ShowFocusUI
+Open_Matrix,Input_J_Press,None,Open_Feed,ShowFeedUI
+Open_Feed,Input_J_Press,None,Closed,HideJournalUI
+Open_Focus,Input_J_Press,None,Closed,HideJournalUI
+*,Global_ForceClose,None,Closed,HideJournalUI

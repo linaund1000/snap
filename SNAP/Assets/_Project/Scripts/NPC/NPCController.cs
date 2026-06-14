@@ -67,6 +67,23 @@ namespace GPOyun.NPC
 
         private void Awake()
         {
+            if (personality != null)
+            {
+                // Create a unique authentic variant (± 20% variance)
+                personality = personality.CreateVariant(0.2f);
+            }
+            else
+            {
+                // If totally null, generate a pure random personality
+                personality = ScriptableObject.CreateInstance<NPCPersonalityData>();
+                personality.name = "Random_Personality";
+                personality.Agreeableness = UnityEngine.Random.value;
+                personality.Neuroticism = UnityEngine.Random.value;
+                personality.Conscientiousness = UnityEngine.Random.value;
+                personality.Extraversion = UnityEngine.Random.value;
+                personality.Openness = UnityEngine.Random.value;
+            }
+
             _animator = GetComponent<Animator>();
             _homePosition = transform.position;
             
@@ -202,18 +219,40 @@ namespace GPOyun.NPC
             var story = _pendingNews.FrontPage;
             if (story != null)
             {
-                // Core emotional reaction to category
-                if (personality != null)
+                // 1. Analyze sentiment of player's custom headline caption
+                string lowerHeadline = story.Headline.ToLowerInvariant();
+                bool hasStrongSentiment = false;
+
+                if (lowerHeadline.Contains("idiot") || lowerHeadline.Contains("stupid") || lowerHeadline.Contains("hate") || lowerHeadline.Contains("terrible") || lowerHeadline.Contains("bad") || lowerHeadline.Contains("ugly"))
                 {
-                    var reaction = personality.GetReactionTo(story.Category);
-                    currentEmotion = reaction.Emotion;
+                    currentEmotion = EmotionType.Angry;
+                    TriggerReaction("😡", VisualUtils.CrimsonRed);
+                    relationshipWithPlayer -= 20;
+                    hasStrongSentiment = true;
                 }
-                else
+                else if (lowerHeadline.Contains("hero") || lowerHeadline.Contains("cool") || lowerHeadline.Contains("love") || lowerHeadline.Contains("great") || lowerHeadline.Contains("good") || lowerHeadline.Contains("beautiful"))
                 {
-                    // Fallback emotional state
-                    currentEmotion = story.Category == NewsCategory.Scandal || story.Category == NewsCategory.Disaster
-                        ? EmotionType.Angry
-                        : EmotionType.Happy;
+                    currentEmotion = EmotionType.Happy;
+                    TriggerReaction("😍", VisualUtils.FountainBlue);
+                    relationshipWithPlayer += 20;
+                    hasStrongSentiment = true;
+                }
+
+                // 2. Core emotional reaction to category (if no strong sentiment override)
+                if (!hasStrongSentiment)
+                {
+                    if (personality != null)
+                    {
+                        var reaction = personality.GetReactionTo(story.Category);
+                        currentEmotion = reaction.Emotion;
+                    }
+                    else
+                    {
+                        // Fallback emotional state
+                        currentEmotion = story.Category == NewsCategory.Scandal || story.Category == NewsCategory.Disaster
+                            ? EmotionType.Angry
+                            : EmotionType.Happy;
+                    }
                 }
 
                 // Photographed Sandbox Influence!

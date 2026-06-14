@@ -1,0 +1,3 @@
+CurrentState,InputTrigger,Condition,NextState,OutputAction
+Locked,Req_UnlockCursor,None,Unlocked,SetCursorVisible
+Unlocked,Req_LockCursor,None,Locked,SetCursorInvisible

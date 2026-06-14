@@ -1,0 +1,4 @@
+CurrentState,InputTrigger,Condition,NextState,OutputAction
+Idle,Req_PlayError,None,Idle,PlayErrorBuzzer
+Idle,Req_PlayClick,None,Idle,PlayMenuClick
+Idle,Req_PlayShutter,None,Idle,PlayCameraShutter

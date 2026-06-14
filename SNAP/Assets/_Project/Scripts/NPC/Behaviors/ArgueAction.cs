@@ -15,21 +15,6 @@ namespace GPOyun.NPC.UtilityAI
             ActionName = "Argue";
         }
 
-        public override float CalculateUtility()
-        {
-            // Only consider arguing if we are bored or have high social desire but in a bad way
-            if (Needs.Boredom < 40f && Needs.SocialDesire < 50f) return 0f;
-
-            _targetNPC = FindEnemy();
-            if (_targetNPC == null) return 0f;
-
-            int relation = GPOyun.Core.ServiceLocator.Get<GPOyun.Core.RelationshipMatrix>() != null ? 
-                GPOyun.Core.ServiceLocator.Get<GPOyun.Core.RelationshipMatrix>().GetRelationship(Controller.NpcId, _targetNPC.NpcId) : 0;
-
-            // The worse the relationship, the higher the utility to go pick a fight!
-            float utility = BaseUtility + (-relation * 0.8f) + (Needs.Boredom * 0.5f);
-            return Mathf.Max(0, utility);
-        }
 
         public override IEnumerator Execute()
         {
@@ -55,16 +40,16 @@ namespace GPOyun.NPC.UtilityAI
                 var gestures = Controller.GetComponent<PantomimeGestures>();
                 if (gestures != null) gestures.SetSadness(true); // Temporary visual for negative interaction
 
-                if (GPOyun.Core.ServiceLocator.Get<GPOyun.Core.RelationshipMatrix>() != null)
+                if (GPOyun.Core.ServiceLocator.TryGet<GPOyun.Core.RelationshipMatrix>(out var rm2))
                 {
                     // A's relationship drops a bit (they let off steam)
-                    GPOyun.Core.ServiceLocator.Get<GPOyun.Core.RelationshipMatrix>().ModifyRelationship(Controller.NpcId, _targetNPC.NpcId, -10);
+                    rm2.ModifyRelationship(Controller.NpcId, _targetNPC.NpcId, -10);
                     // B's relationship drops MASSIVELY because A just walked up and yelled at them
-                    GPOyun.Core.ServiceLocator.Get<GPOyun.Core.RelationshipMatrix>().ModifyRelationship(_targetNPC.NpcId, Controller.NpcId, -30);
+                    rm2.ModifyRelationship(_targetNPC.NpcId, Controller.NpcId, -30);
                     
                     // Form a toxic opinion
-                    GPOyun.Core.ServiceLocator.Get<GPOyun.Core.RelationshipMatrix>().RecordOpinion(Controller.NpcId, _targetNPC.NpcId, "They made me so angry today! I can't stand them.");
-                    GPOyun.Core.ServiceLocator.Get<GPOyun.Core.RelationshipMatrix>().RecordOpinion(_targetNPC.NpcId, Controller.NpcId, "They came over just to pick a fight with me. Jerk.");
+                    rm2.RecordOpinion(Controller.NpcId, _targetNPC.NpcId, "They made me so angry today! I can't stand them.");
+                    rm2.RecordOpinion(_targetNPC.NpcId, Controller.NpcId, "They came over just to pick a fight with me. Jerk.");
                 }
 
                 // They both remember the fight
@@ -102,8 +87,8 @@ namespace GPOyun.NPC.UtilityAI
                 var otherNpc = hit.GetComponentInParent<NPCController>();
                 if (otherNpc != null && otherNpc != Controller)
                 {
-                    int relation = GPOyun.Core.ServiceLocator.Get<GPOyun.Core.RelationshipMatrix>() != null ? 
-                        GPOyun.Core.ServiceLocator.Get<GPOyun.Core.RelationshipMatrix>().GetRelationship(Controller.NpcId, otherNpc.NpcId) : 0;
+                    int relation = GPOyun.Core.ServiceLocator.TryGet<GPOyun.Core.RelationshipMatrix>(out var rm3) ? 
+                        rm3.GetRelationship(Controller.NpcId, otherNpc.NpcId) : 0;
                     
                     if (relation < lowestRelation)
                     {

@@ -26,15 +26,15 @@ namespace GPOyun.Environment
 
         private void Update()
         {
-            if (GPOyun.Core.ServiceLocator.Get<GPOyun.Managers.TimeManager>() == null || mainDirectionalLight == null) return;
+            if (!GPOyun.Core.ServiceLocator.TryGet<GPOyun.Managers.TimeManager>(out var tm) || mainDirectionalLight == null) return;
 
-            UpdateSunPosition();
+            UpdateSunPosition(tm);
         }
 
-        private void UpdateSunPosition()
+        private void UpdateSunPosition(GPOyun.Managers.TimeManager tm)
         {
-            float progress = GPOyun.Core.ServiceLocator.Get<GPOyun.Managers.TimeManager>().GetPhaseProgress();
-            DayPhase current = GPOyun.Core.ServiceLocator.Get<GPOyun.Managers.TimeManager>().CurrentPhase;
+            float progress = tm.GetPhaseProgress();
+            DayPhase current = tm.CurrentPhase;
             
             // Map DayPhase to a continuous 0-1 daily cycle
             float dayProgress = ((int)current + progress) / 5f;

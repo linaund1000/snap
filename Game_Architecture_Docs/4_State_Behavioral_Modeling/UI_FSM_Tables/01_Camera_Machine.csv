@@ -1,0 +1,5 @@
+CurrentState,InputTrigger,Condition,NextState,OutputAction
+Closed,Input_C_Hold,CanEquipCamera,Open_Framing,EquipViewfinder
+Open_Framing,Input_C_Release,None,Closed,HideViewfinder
+Open_Framing,Input_LClick,None,Open_Framing,CapturePhoto
+Open_Framing,Global_ForceClose,None,Closed,HideViewfinder

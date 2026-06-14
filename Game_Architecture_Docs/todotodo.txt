@@ -1,0 +1,23 @@
+bu gereklilikler , humanreadable sekilde once usecase, scenraio, stories falan ve daha sonra icerideki tum folderlara degisiklik ekleme olarak gitmeli sonra da bu planlamanin saglamasi dogru mu diye yapilmali, bunun finite state machine ve finite state transition functions table cikarilmali eklenmeli, bunlar onemli kullanici islemleri
+
+check for the all ui finite state machine states, we have to have state transition functions some of should blocked because after pressing j user might press c and what would happen on the screen? we should ux easiness design, user expectations and user abilities should cover in transition function table. and this is design heavy write this first in the game architecture docs then code later
+
+---
+[ANTIGRAVITY ARCHITECT RESPONSE]
+
+**Regarding "Should the user see ALL activities of NPCs or not?" (UX for Emojis & Endless Scrolling):**
+My professional UX perspective: **No, the user should NOT see every single tiny activity (like every single emoji or step) in the main deductive journal.** 
+Seeing every tiny detail causes **Cognitive Overload** and clutter. A detective doesn't care that "Mia said hi to Rex", they care that "Mia and Rex are now friends". 
+*However*, because the game is highly systemic, the player *does* need a way to feel the "pulse" of the living world without it destroying memory.
+
+**Solution: The "Two-Tier" Feed System**
+1. **The Live Ticker (Endless Scrolling):** A very lightweight, memory-efficient UI (maybe on the edge of the screen like a Twitch chat or a ticker) that shows *every* emoji and interaction in real-time, but it **forgets** them after 30 seconds. It doesn't save to the hard drive, it just scrolls and dies. This gives the "endless scrolling / living world" feeling.
+2. **The Global Journal (The Ledger):** When pressing 'J', the user only sees **Meaningful Memory Events** (e.g., Fights, Romances, Gossip spread, Group formations). This is the filtered, high-value data.
+
+**Regarding "Global UI Finite State Machine (Blocking Inputs)":**
+You are 100% correct. If `J` is open, and the user presses `C` (Camera), what happens? Does the camera open over the journal? Does the game crash? 
+We need a **Global Input FSM** that dictates priorities. For example:
+- `IMMERSION` (Default): Can press `J` (Journal), `C` (Camera), `B` (Board).
+- `JOURNAL_OPEN`: `C` and `B` are **BLOCKED** or they **OVERRIDE** (auto-close Journal). Auto-close is better UX (Fluidity) than blocking. If I have Journal open and I quickly want to snap a photo, pressing `C` should instantly close Journal and open Camera.
+
+I am writing this highly detailed Global UI Transition Table into the `implementation_plan.md` now.

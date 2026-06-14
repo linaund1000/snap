@@ -1,0 +1,4 @@
+CurrentState,InputTrigger,Condition,NextState,OutputAction
+Closed,Input_G_Press,None,Open,ShowGalleryUI
+Open,Input_G_Press,None,Closed,HideGalleryUI
+*,Global_ForceClose,None,Closed,HideGalleryUI

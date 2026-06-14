@@ -11,13 +11,6 @@ namespace GPOyun.NPC.UtilityAI
             ActionName = "GoHome";
         }
 
-        public override float CalculateUtility()
-        {
-            float utility = BaseUtility;
-            if (Needs.IsNightTime) utility += 80f; // Strongly want to go home
-            if (Needs.Energy < 15f) utility += 50f; // So tired they just want to go home
-            return utility;
-        }
 
         public override IEnumerator Execute()
         {

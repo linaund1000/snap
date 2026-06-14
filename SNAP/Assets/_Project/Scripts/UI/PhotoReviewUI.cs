@@ -37,7 +37,7 @@ namespace GPOyun.UI
             _currentPhoto = photo;
             _isOpen = true;
 
-            if (GPOyun.Core.ServiceLocator.Get<GPOyun.Core.GameManager>() != null) GPOyun.Core.ServiceLocator.Get<GPOyun.Core.GameManager>().PauseGame();
+            GPOyun.UI.UIManager.Instance?.PushMenu(gameObject);
 
             if (_previewImage != null) _previewImage.texture = photo.CapturedTexture;
             
@@ -55,8 +55,8 @@ namespace GPOyun.UI
             }
 
             // Unlock cursor so user can click review buttons
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
+            
+            
         }
 
         public void Hide()
@@ -64,7 +64,7 @@ namespace GPOyun.UI
             if (!_isOpen) return;
             _isOpen = false;
 
-            if (GPOyun.Core.ServiceLocator.Get<GPOyun.Core.GameManager>() != null) GPOyun.Core.ServiceLocator.Get<GPOyun.Core.GameManager>().ResumeGame();
+            GPOyun.UI.UIManager.Instance?.PopMenu(gameObject);
 
             if (_canvasGroup != null)
             {
@@ -74,8 +74,8 @@ namespace GPOyun.UI
             }
 
             // Re-lock cursor to return to walking mode
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
+            
+            
         }
 
         private void KeepPhoto()

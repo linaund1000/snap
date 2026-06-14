@@ -22,6 +22,7 @@ namespace GPOyun.Core
         public int IdA;
         public int IdB;
         public int Score;
+        public int Trust; // New field for Neural Deception Memory
     }
 
     [System.Serializable]
@@ -30,6 +31,7 @@ namespace GPOyun.Core
         public int NpcId;
         public List<MemoryEvent> ShortTermMemories = new List<MemoryEvent>();
         public List<string> Instincts = new List<string>();
+        public List<GPOyun.NPC.UtilityAI.NPCBrain.ActionWeightRecord> NeuralWeights = new List<GPOyun.NPC.UtilityAI.NPCBrain.ActionWeightRecord>();
     }
 
     /// <summary>
@@ -74,9 +76,10 @@ namespace GPOyun.Core
                         int idA = npcs[i].NpcId;
                         int idB = npcs[j].NpcId;
                         int score = GPOyun.Core.ServiceLocator.Get<GPOyun.Core.RelationshipMatrix>().GetRelationship(idA, idB);
-                        if (score != 0)
+                        int trust = GPOyun.Core.ServiceLocator.Get<GPOyun.Core.RelationshipMatrix>().GetTrust(idA, idB);
+                        if (score != 0 || trust != 50)
                         {
-                            data.Relationships.Add(new RelationshipData { IdA = idA, IdB = idB, Score = score });
+                            data.Relationships.Add(new RelationshipData { IdA = idA, IdB = idB, Score = score, Trust = trust });
                         }
                     }
                 }
@@ -91,7 +94,8 @@ namespace GPOyun.Core
                         {
                             NpcId = npc.NpcId,
                             ShortTermMemories = memStream.GetMemorySnapshot(),
-                            Instincts = memStream.GetInstincts()
+                            Instincts = memStream.GetInstincts(),
+                            NeuralWeights = npc.Brain != null ? new List<GPOyun.NPC.UtilityAI.NPCBrain.ActionWeightRecord>(npc.Brain.ActionWeights) : new List<GPOyun.NPC.UtilityAI.NPCBrain.ActionWeightRecord>()
                         };
                         data.NpcMemories.Add(npcData);
                     }
@@ -122,6 +126,7 @@ namespace GPOyun.Core
                 foreach (var rel in data.Relationships)
                 {
                     GPOyun.Core.ServiceLocator.Get<GPOyun.Core.RelationshipMatrix>().ModifyRelationship(rel.IdA, rel.IdB, rel.Score);
+                    GPOyun.Core.ServiceLocator.Get<GPOyun.Core.RelationshipMatrix>().SetTrustRaw(rel.IdA, rel.IdB, rel.Trust);
                 }
             }
 
@@ -136,6 +141,10 @@ namespace GPOyun.Core
                     if (memStream != null)
                     {
                         memStream.RestoreState(npcData.ShortTermMemories, npcData.Instincts);
+                    }
+                    if (npc.Brain != null && npcData.NeuralWeights != null)
+                    {
+                        npc.Brain.ActionWeights = npcData.NeuralWeights;
                     }
                 }
             }

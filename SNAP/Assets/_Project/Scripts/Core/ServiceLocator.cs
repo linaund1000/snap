@@ -26,7 +26,7 @@ namespace GPOyun.Core
             {
                 return (T)service;
             }
-            UnityEngine.Debug.LogError($"[ServiceLocator] Service {typeof(T).Name} not found! Did you forget to register it?");
+            // UnityEngine.Debug.LogError($"[ServiceLocator] Service {typeof(T).Name} not found! Did you forget to register it?");
             return default;
         }
 

@@ -25,6 +25,40 @@ namespace GPOyun.NPC.UtilityAI
             public float IdealIntroversion;
         }
 
+        [System.Serializable]
+        public class ActionWeightRecord
+        {
+            public string ActionName;
+            public float Weight;
+        }
+
+        [Header("Neural Weights")]
+        public List<ActionWeightRecord> ActionWeights = new List<ActionWeightRecord>();
+
+        public float GetActionWeight(string actionName, float defaultWeight)
+        {
+            var record = ActionWeights.Find(r => r.ActionName == actionName);
+            if (record == null)
+            {
+                record = new ActionWeightRecord { ActionName = actionName, Weight = defaultWeight };
+                ActionWeights.Add(record);
+            }
+            return record.Weight;
+        }
+
+        public void UpdateActionWeight(string actionName, float delta)
+        {
+            var record = ActionWeights.Find(r => r.ActionName == actionName);
+            if (record != null)
+            {
+                record.Weight = Mathf.Clamp(record.Weight + delta, 0.01f, 1000f);
+                if (GPOyun.UI.HUDManager.Instance != null && Mathf.Abs(delta) > 5f)
+                {
+                    GPOyun.UI.HUDManager.Instance.SpawnEmojiReaction(_controller.transform, delta > 0 ? "🧠+" : "🧠-", Color.cyan);
+                }
+            }
+        }
+
         [Header("Cognitive State")]
         public string CurrentAim = "Idle";
         public string CurrentContext = "Waiting for simulation to begin.";

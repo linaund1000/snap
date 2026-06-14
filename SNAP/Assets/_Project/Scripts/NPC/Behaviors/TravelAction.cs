@@ -15,21 +15,6 @@ namespace GPOyun.NPC.UtilityAI
             _agent = controller.GetComponent<NavMeshAgent>();
         }
 
-        public override float CalculateUtility()
-        {
-            // Low chance/utility by default, increases if high energy and low boredom?
-            // Just a flat chance or based on a new need if added. For now base utility is 5
-            // But occasionally spikes if they haven't traveled in a while.
-            // We'll give it a low static utility, but random spikes.
-            float utility = BaseUtility + 5f; // Random removed to prevent oscillation
-            
-            if (Needs.Energy < 40f)
-            {
-                utility -= 50f; // Won't travel if tired
-            }
-
-            return Mathf.Max(0, utility);
-        }
 
         public override IEnumerator Execute()
         {

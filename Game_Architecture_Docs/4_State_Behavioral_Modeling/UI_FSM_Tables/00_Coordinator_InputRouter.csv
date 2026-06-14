@@ -1,0 +1,8 @@
+CurrentGlobalState,InputReceived,Condition,NextGlobalState,RouterAction
+Immersion,Input_C_Hold,None,Framing,Emit(Req_LockCursor|Req_SlowMove|Req_HideHUD)
+Immersion,Input_J_Press,None,UI_Active,Emit(Req_UnlockCursor|Req_BlockMove)
+Immersion,Input_Esc_Press,None,Paused,Emit(Req_UnlockCursor|Req_BlockMove|Req_PauseTime)
+UI_Active,Input_Esc_Press,None,Immersion,Emit(Global_ForceClose|Req_LockCursor|Req_FreeMove)
+UI_Active,Input_C_Hold,None,Framing,Emit(Global_ForceClose|Req_LockCursor|Req_SlowMove|Req_HideHUD)
+Paused,Input_Esc_Press,None,Immersion,Emit(Global_ForceClose|Req_LockCursor|Req_FreeMove|Req_ResumeTime)
+Paused,Input_C_Hold,None,Paused,Emit(Req_PlayError)

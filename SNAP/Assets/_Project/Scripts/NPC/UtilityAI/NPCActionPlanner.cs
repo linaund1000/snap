@@ -80,65 +80,67 @@ namespace GPOyun.NPC.UtilityAI
         {
             if (_availableActions.Count == 0) return;
 
-            NPCAction bestAction = null;
-            float highestUtility = -1f;
+            // 1. Calculate all utilities (which are now reading directly from Neural Weights!)
+            float totalWeight = 0f;
+            Dictionary<NPCAction, float> actionWeights = new Dictionary<NPCAction, float>();
 
             foreach (var action in _availableActions)
             {
-                float utility = action.CalculateUtility();
-                if (utility > highestUtility)
+                float weight = Mathf.Max(0.1f, action.CalculateUtility()); // Ensure no zero weights
+                actionWeights[action] = weight;
+                totalWeight += weight;
+            }
+
+            // 2. Weighted Random Selection (Probability Distribution)
+            // This replaces rigid if-else logic with human-like unpredictability
+            float randomPoint = Random.Range(0, totalWeight);
+            float currentWeight = 0f;
+            NPCAction selectedAction = null;
+
+            foreach (var kvp in actionWeights)
+            {
+                currentWeight += kvp.Value;
+                if (randomPoint <= currentWeight)
                 {
-                    highestUtility = utility;
-                    bestAction = action;
+                    selectedAction = kvp.Key;
+                    break;
                 }
             }
 
-            // INSTINCT FALLBACK: If all actions failed or have <= 0 utility, trigger CryInstinctAction
-            if (highestUtility <= 0f)
-            {
-                var cryAction = _availableActions.Find(a => a is CryInstinctAction);
-                if (cryAction != null)
-                {
-                    bestAction = cryAction;
-                    highestUtility = 0.1f;
-                }
-            }
+            if (selectedAction == null) selectedAction = _availableActions[0];
 
             bool isWhim = false;
-            // The Chaos Multiplier (Whim System)
-            // 5% base chance to completely ignore logical utility and pick a random action
+            // The Chaos Multiplier (Whim System) - Keeps them a bit erratic
             if (_controller != null && _controller.personality != null)
             {
                 float whimChance = 0.05f;
-                if (_controller.personality.Neuroticism > 0.7f) whimChance = 0.10f; // Neurotic = more chaotic
-                if (_controller.personality.Conscientiousness > 0.7f) whimChance = 0.01f; // Conscientious = very logical
-
-                // Observer effect dampens chaos
-                if (_needs.IsPlayerNearby) whimChance = 0.0f;
+                if (_controller.personality.Neuroticism > 0.7f) whimChance = 0.10f; 
+                if (_controller.personality.Conscientiousness > 0.7f) whimChance = 0.01f; 
 
                 if (Random.value < whimChance)
                 {
-                    bestAction = _availableActions[Random.Range(0, _availableActions.Count)];
-                    highestUtility = 9999f;
+                    selectedAction = _availableActions[Random.Range(0, _availableActions.Count)];
                     isWhim = true;
                 }
             }
 
-            // If a new action is vastly superior (or our current action is null), switch!
-            if (_activeAction == null || (bestAction != null && bestAction != _activeAction && highestUtility > (_activeAction.CalculateUtility() + 5f)))
+            // If a different action was rolled, switch!
+            // Note: Since it's weighted random, we might roll the same action. If so, just continue it.
+            if (_activeAction == null || selectedAction != _activeAction)
             {
                 if (_activeAction != null)
                 {
+                    _activeAction.EvaluateReward(); // Learn from the previous action!
                     _activeAction.Interrupt();
                     StopAllCoroutines();
                 }
 
-                _activeAction = bestAction;
+                _activeAction = selectedAction;
+                _activeAction.SnapshotNeeds(); // Record state before execution
                 
-                // Write cognitive state to the Brain
                 if (_controller.Brain != null)
                 {
-                    string context = isWhim ? "Acting on a sudden, unpredictable whim!" : "Logical utility choice based on physiological needs.";
+                    string context = isWhim ? "Acting on a sudden, unpredictable whim!" : "Neural weight probability distribution selection.";
                     _controller.Brain.SetCognitiveState(_activeAction.ActionName, context, isWhim);
                 }
 

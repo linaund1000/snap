@@ -15,12 +15,6 @@ namespace GPOyun.NPC.UtilityAI
             BaseUtility = 0f; // Only triggers as a fallback when everything else fails
         }
 
-        public override float CalculateUtility()
-        {
-            // The ActionPlanner specifically forces this when all other actions fail,
-            // so we return 0 here to keep it at the very bottom of the utility pile.
-            return 0f;
-        }
 
         public override IEnumerator Execute()
         {

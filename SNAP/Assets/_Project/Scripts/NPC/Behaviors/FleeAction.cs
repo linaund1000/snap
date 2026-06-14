@@ -11,11 +11,6 @@ namespace GPOyun.NPC.UtilityAI
             ActionName = "Flee";
         }
 
-        public override float CalculateUtility()
-        {
-            if (Controller.currentEmotion == EmotionType.Fearful) return 100f; 
-            return 0f;
-        }
 
         public override IEnumerator Execute()
         {

@@ -1,0 +1,4 @@
+CurrentState,InputTrigger,Condition,NextState,OutputAction
+Closed,Input_B_Press,None,Open,ShowBoardUI
+Open,Input_B_Press,None,Closed,HideBoardUI
+*,Global_ForceClose,None,Closed,HideBoardUI

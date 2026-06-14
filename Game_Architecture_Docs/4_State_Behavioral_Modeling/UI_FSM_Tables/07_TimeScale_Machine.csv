@@ -1,0 +1,3 @@
+CurrentState,InputTrigger,Condition,NextState,OutputAction
+Running,Req_PauseTime,None,Paused,SetTimeScaleZero
+Paused,Req_ResumeTime,None,Running,SetTimeScaleOne

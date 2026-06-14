@@ -15,33 +15,6 @@ namespace GPOyun.NPC.UtilityAI
             ActionName = "Socialize";
         }
 
-        public override float CalculateUtility()
-        {
-            float utility = BaseUtility;
-            if (Controller.Brain != null)
-            {
-                // Setpoint Minimization (Homeostasis)
-                float currentDeficit = Mathf.Abs(Needs.SocialDesire - Controller.Brain.ComfortZone.IdealSocial);
-                float predictedDeficit = Controller.Brain.ComfortZone.IdealSocial; // Because this action drops SocialDesire to 0 
-
-                if (currentDeficit > predictedDeficit)
-                {
-                    utility += (currentDeficit - predictedDeficit) * 1.5f;
-                }
-                else
-                {
-                    // Behavioral Degradation: Socializing right now would pull us away from our comfort zone!
-                    utility -= (predictedDeficit - currentDeficit) * 2f;
-                }
-            }
-            else
-            {
-                utility += (Needs.SocialDesire * 0.9f);
-            }
-
-            if (Needs.Energy < 30f) utility -= 40f;
-            return Mathf.Max(0, utility);
-        }
 
         public override IEnumerator Execute()
         {
@@ -223,11 +196,12 @@ namespace GPOyun.NPC.UtilityAI
             {
                 if (otherNpc != null)
                 {
-                    int relation = GPOyun.Core.ServiceLocator.Get<GPOyun.Core.RelationshipMatrix>() != null ? 
-                        GPOyun.Core.ServiceLocator.Get<GPOyun.Core.RelationshipMatrix>().GetRelationship(Controller.NpcId, otherNpc.NpcId) : 0;
+                    var relMatrix = GPOyun.Core.ServiceLocator.Get<GPOyun.Core.RelationshipMatrix>();
+                    int relation = relMatrix != null ? relMatrix.GetRelationship(Controller.NpcId, otherNpc.NpcId) : 0;
+                    int trust = relMatrix != null ? relMatrix.GetTrust(Controller.NpcId, otherNpc.NpcId) : 50;
                     
-                    // Don't socialize with enemies, they use ArgueAction for that!
-                    if (relation >= -10 && relation > highestRelation)
+                    // Don't socialize with enemies OR untrustworthy people
+                    if (relation >= -10 && trust > 30 && relation > highestRelation)
                     {
                         highestRelation = relation;
                         bestFriend = otherNpc;
@@ -235,6 +209,25 @@ namespace GPOyun.NPC.UtilityAI
                 }
             }
             return bestFriend;
+        }
+
+        public override float EvaluateReward()
+        {
+            float reward = base.EvaluateReward();
+            
+            // DECEPTION / TRUST CHECK
+            // If the social interaction was supposed to be positive, but our needs were hurt
+            // (e.g. they stressed us out or drained energy while acting nice), we lose trust!
+            if (reward < -5f && _targetNPC != null)
+            {
+                var relMatrix = GPOyun.Core.ServiceLocator.Get<GPOyun.Core.RelationshipMatrix>();
+                if (relMatrix != null)
+                {
+                    relMatrix.ModifyTrust(Controller.NpcId, _targetNPC.NpcId, -15);
+                    relMatrix.RecordOpinion(Controller.NpcId, _targetNPC.NpcId, "They act nice, but I always feel drained and worse after talking to them. Are they fake?");
+                }
+            }
+            return reward;
         }
     }
 }

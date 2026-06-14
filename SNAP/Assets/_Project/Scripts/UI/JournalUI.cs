@@ -6,9 +6,9 @@ using GPOyun.Core;
 namespace GPOyun.UI
 {
     /// <summary>
-    /// Cozy observational journal UI stack. Opens with [J] key.
-    /// Lists observed social logs on the right, and active relationship bonds on the left.
-    /// Built completely procedurally (Zero-Asset) to ensure seamless setup.
+    /// Observational Journal UI. 
+    /// Visualizes relationships, global feed, and targeted NPC focus.
+    /// Built procedurally.
     /// </summary>
     public class JournalUI : MonoBehaviour
     {
@@ -17,25 +17,15 @@ namespace GPOyun.UI
         {
             get
             {
-                if (_instance == null)
-                {
-                    _instance = Object.FindAnyObjectByType<JournalUI>();
-                }
+                if (_instance == null) _instance = Object.FindAnyObjectByType<JournalUI>();
                 return _instance;
-            }
-            private set
-            {
-                _instance = value;
             }
         }
 
-        [Header("References")]
         public CanvasGroup journalCanvasGroup;
-        public Text relationshipListText;
-        public Text observationLogsText;
-
-        private bool _isOpen = false;
-        public bool IsOpen => _isOpen;
+        private List<GameObject> _cellPool = new List<GameObject>();
+        
+        private NPC.NPCController _focusedTarget;
 
         private void Awake()
         {
@@ -49,44 +39,97 @@ namespace GPOyun.UI
             Hide();
         }
 
-        // Input listening handled centrally by GlobalInputListener
-
-        public void Toggle()
+        private float _updateTimer = 0f;
+        private void Update()
         {
-            if (_isOpen) Hide();
-            else Show();
+            if (journalCanvasGroup.alpha <= 0) return;
+            
+            _updateTimer += Time.deltaTime;
+            if (_updateTimer >= 1.0f) // Refresh UI every second
+            {
+                _updateTimer = 0f;
+                if (journalCanvasGroup != null && journalCanvasGroup.alpha > 0)
+                {
+                    // Find which one is active
+                    string state = "Matrix";
+                    Transform canvasTransform = transform.Find("JOURNAL_CANVAS");
+                    if (canvasTransform != null)
+                    {
+                        var feed = canvasTransform.Find("FeedContainer");
+                        var focus = canvasTransform.Find("FocusContainer");
+                        if (feed != null && feed.gameObject.activeSelf) state = "Feed";
+                        if (focus != null && focus.gameObject.activeSelf) state = "Focus";
+                    }
+                    RebuildUIForCurrentState(state);
+                }
+            }
         }
 
-        public void Show()
+        public void ShowMatrix()
         {
-            _isOpen = true;
-            SettingsController.Instance?.Hide();
-            PhotoGalleryUI.Instance?.Hide();
-            EditorialUI.Instance?.Hide();
-            NewspaperBoardUI.Instance?.Hide();
-
-            if (GPOyun.Core.ServiceLocator.Get<GPOyun.Core.GameManager>() != null) GPOyun.Core.ServiceLocator.Get<GPOyun.Core.GameManager>().PauseGame();
-
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
-
-            RefreshData();
+            _focusedTarget = null;
+            RebuildUIForCurrentState("Matrix");
+            GPOyun.UI.UIManager.Instance?.PushMenu(gameObject);
             Apply(1f, true, true);
-            Debug.Log("[JournalUI] Opened.");
+        }
+
+        public void ShowFeed()
+        {
+            _focusedTarget = null;
+            RebuildUIForCurrentState("Feed");
+            GPOyun.UI.UIManager.Instance?.PushMenu(gameObject);
+            Apply(1f, true, true);
+        }
+
+        public void ShowFocus(NPC.NPCController target)
+        {
+            _focusedTarget = target;
+            RebuildUIForCurrentState("Focus");
+            GPOyun.UI.UIManager.Instance?.PushMenu(gameObject);
+            Apply(1f, true, true);
         }
 
         public void Hide()
         {
-            if (!_isOpen) return;
-            _isOpen = false;
-
-            if (GPOyun.Core.ServiceLocator.Get<GPOyun.Core.GameManager>() != null) GPOyun.Core.ServiceLocator.Get<GPOyun.Core.GameManager>().ResumeGame();
-
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
+            _focusedTarget = null;
+            GPOyun.UI.UIManager.Instance?.PopMenu(gameObject);
             Apply(0f, false, false);
-            Debug.Log("[JournalUI] Closed.");
         }
+
+        private void RebuildUIForCurrentState(string stateName)
+        {
+            ClearPool();
+            SetupUI(); // Ensure canvas exists
+
+            // Hide/Show sub-panels based on state
+            Transform canvasTransform = transform.Find("JOURNAL_CANVAS");
+            if (canvasTransform != null)
+            {
+                var matrixContainer = canvasTransform.Find("MatrixContainer");
+                if (matrixContainer != null) matrixContainer.gameObject.SetActive(stateName == "Matrix");
+
+                var feedContainer = canvasTransform.Find("FeedContainer");
+                if (feedContainer != null) feedContainer.gameObject.SetActive(stateName == "Feed");
+
+                var focusContainer = canvasTransform.Find("FocusContainer");
+                if (focusContainer != null) focusContainer.gameObject.SetActive(stateName == "Focus");
+            }
+
+            if (stateName == "Matrix")
+            {
+                BuildMatrix();
+            }
+            else if (stateName == "Feed")
+            {
+                BuildFeed();
+            }
+            else if (stateName == "Focus")
+            {
+                BuildFocus(_focusedTarget);
+            }
+        }
+
+
 
         private Coroutine _fadeCoroutine;
 
@@ -107,177 +150,257 @@ namespace GPOyun.UI
             }
         }
 
-        private void RefreshData()
+        private void ClearPool()
         {
-            var npcs = FindObjectsByType<NPC.NPCController>();
-            NPC.NPCController targetNpc = null;
+            foreach (var cell in _cellPool) Destroy(cell);
+            _cellPool.Clear();
+        }
 
-            // Target Inspector Raycast
-            if (Camera.main != null)
+        private void BuildMatrix()
+        {
+            var npcs = FindObjectsByType<NPC.NPCController>(FindObjectsInactive.Include);
+            int count = npcs.Length;
+            if (count == 0)
             {
-                Ray ray = new Ray(Camera.main.transform.position, Camera.main.transform.forward);
-                if (Physics.Raycast(ray, out RaycastHit hit, 50f))
+                Debug.LogWarning("[JournalUI] BuildMatrix found 0 NPCs! Matrix will be empty.");
+                return;
+            }
+
+            // Sort NPCs by ID to have a consistent matrix
+            System.Array.Sort(npcs, (a, b) => a.NpcId.CompareTo(b.NpcId));
+
+            var rm = ServiceLocator.Get<RelationshipMatrix>();
+
+            Transform canvasTransform = transform.Find("JOURNAL_CANVAS");
+            if (canvasTransform == null) return;
+            Transform matrixContainer = canvasTransform.Find("MatrixContainer");
+            if (matrixContainer == null) return;
+
+            // Setup Grid Layout
+            var grid = matrixContainer.GetComponent<GridLayoutGroup>();
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            grid.constraintCount = count + 1; // +1 for the header column
+            grid.cellSize = new Vector2(22, 22);
+            grid.spacing = new Vector2(2, 2);
+
+            // 1. Top-Left Empty Corner
+            CreateTextCell("", VisualUtils.StuccoWhite, true, matrixContainer);
+
+            // 2. Top Header Row (Target NPCs)
+            for (int i = 0; i < count; i++)
+            {
+                CreateTextCell(FormatName(npcs[i].NpcName), VisualUtils.StuccoWhite, true, matrixContainer);
+            }
+
+            // 3. Rows
+            for (int row = 0; row < count; row++)
+            {
+                // Row Header (Source NPC)
+                CreateTextCell(FormatName(npcs[row].NpcName), VisualUtils.StuccoWhite, true, matrixContainer);
+
+                for (int col = 0; col < count; col++)
                 {
-                    targetNpc = hit.collider.GetComponentInParent<NPC.NPCController>();
+                    if (row == col)
+                    {
+                        CreateTextCell("-", Color.gray, false, matrixContainer);
+                    }
+                    else
+                    {
+                        int rel = rm != null ? rm.GetRelationship(npcs[row].NpcId, npcs[col].NpcId) : 0;
+                        int trust = rm != null ? rm.GetTrust(npcs[row].NpcId, npcs[col].NpcId) : 50;
+
+                        string text = rel.ToString();
+                        Color bgColor = Color.gray;
+
+                        if (rel > 50) bgColor = VisualUtils.PineGreen;
+                        else if (rel < -50) bgColor = VisualUtils.Terracotta;
+                        else if (rel > 0) bgColor = new Color(0.3f, 0.5f, 0.3f);
+                        else if (rel < 0) bgColor = new Color(0.5f, 0.3f, 0.3f);
+
+                        // Trust indicators
+                        if (trust <= -50) text += " 🐍";
+                        if (trust >= 80 && rel >= 80) text += " ❤️";
+
+                        CreateColorCell(text, bgColor, matrixContainer);
+                    }
+                }
+            }
+        }
+
+        private void BuildFeed()
+        {
+            Transform canvasTransform = transform.Find("JOURNAL_CANVAS");
+            if (canvasTransform == null) return;
+            Transform feedContainer = canvasTransform.Find("FeedContainer");
+            if (feedContainer == null) return;
+
+            // Clear previous feed items
+            foreach (Transform child in feedContainer) Destroy(child.gameObject);
+
+            var events = GPOyun.Core.GlobalEventLogger.GetRecentEvents();
+
+            // Create title
+            CreateTextCell("GLOBAL EVENT FEED (Last 20 Events)", VisualUtils.StuccoWhite, true, feedContainer);
+
+            int displayCount = Mathf.Min(20, events.Count);
+            if (displayCount == 0)
+            {
+                CreateTextCell("No events yet...", new Color(0.6f, 0.6f, 0.6f), false, feedContainer);
+                return;
+            }
+
+            for (int i = 0; i < displayCount; i++)
+            {
+                CreateTextCell(events[i], new Color(0.8f, 0.8f, 0.8f), false, feedContainer);
+            }
+        }
+
+        private void BuildFocus(NPC.NPCController target)
+        {
+            Transform canvasTransform = transform.Find("JOURNAL_CANVAS");
+            if (canvasTransform == null) return;
+            Transform focusContainer = canvasTransform.Find("FocusContainer");
+            if (focusContainer == null) return;
+
+            // Clear previous items
+            foreach (Transform child in focusContainer) Destroy(child.gameObject);
+
+            if (target == null)
+            {
+                CreateTextCell("No Target Selected", VisualUtils.Terracotta, true, focusContainer);
+                return;
+            }
+
+            CreateTextCell($"FOCUS: {target.NpcName.ToUpper()}", VisualUtils.StuccoWhite, true, focusContainer);
+
+            // Left side logic / Simple list for now
+            CreateTextCell("--- RECENT MEMORIES ---", VisualUtils.StuccoWhite, true, focusContainer);
+            var memStream = target.GetComponent<NPC.Memory.NPCMemoryStream>();
+            if (memStream != null)
+            {
+                var memories = memStream.GetMemorySnapshot();
+                memories.Sort((a, b) => b.Timestamp.CompareTo(a.Timestamp)); // Newest first
+
+                int displayCount = Mathf.Min(10, memories.Count);
+                for (int i = 0; i < displayCount; i++)
+                {
+                    var evt = memories[i];
+                    string timeStr = System.TimeSpan.FromSeconds(evt.Timestamp).ToString(@"mm\:ss");
+                    CreateTextCell($"[{timeStr}] {evt.Trigger} -> {evt.FeltEmotion}", new Color(0.8f, 0.8f, 0.8f), false, focusContainer);
                 }
             }
 
-            // 1. LEFT PANEL (Village Bonds or Specific Bonds)
-            if (relationshipListText != null && GPOyun.Core.ServiceLocator.Get<GPOyun.Core.RelationshipMatrix>() != null)
+            CreateTextCell("--- RELATIONSHIPS ---", VisualUtils.StuccoWhite, true, focusContainer);
+            var rm = ServiceLocator.Get<RelationshipMatrix>();
+            if (rm != null)
             {
-                System.Text.StringBuilder sb = new System.Text.StringBuilder();
-
-                if (targetNpc != null)
+                var npcs = FindObjectsByType<NPC.NPCController>(FindObjectsInactive.Include);
+                foreach (var other in npcs)
                 {
-                    sb.AppendLine($"<color=#E6C03C><b>[ {targetNpc.NpcName.ToUpper()}'S BONDS ]</b></color>");
-                    sb.AppendLine("-----------------------------------------");
-
-                    var loves = new List<string>();
-                    var friends = new List<string>();
-                    var rivals = new List<string>();
-
-                    foreach (var other in npcs)
-                    {
-                        if (targetNpc == other) continue;
-                        int score = GPOyun.Core.ServiceLocator.Get<GPOyun.Core.RelationshipMatrix>().GetRelationship(targetNpc.NpcId, other.NpcId);
-                        
-                        if (score >= 86) loves.Add($"{other.NpcName} ({score})");
-                        else if (score >= 50) friends.Add($"{other.NpcName} ({score})");
-                        else if (score <= -50) rivals.Add($"{other.NpcName} ({score})");
-                    }
-
-                    if (loves.Count > 0) sb.AppendLine($"  <color=#FF69B4>Loves: </color> {string.Join(", ", loves)}");
-                    if (friends.Count > 0) sb.AppendLine($"  <color=#327CB2>Friends:</color> {string.Join(", ", friends)}");
-                    if (rivals.Count > 0) sb.AppendLine($"  <color=#D95933>Rivals: </color> {string.Join(", ", rivals)}");
+                    if (other.NpcId == target.NpcId) continue;
+                    int rel = rm.GetRelationship(target.NpcId, other.NpcId);
+                    int trust = rm.GetTrust(target.NpcId, other.NpcId);
                     
-                    if (loves.Count == 0 && friends.Count == 0 && rivals.Count == 0)
-                        sb.AppendLine("\n[ NO STRONG BONDS FORMED YET ]");
-                }
-                else
-                {
-                    sb.AppendLine("<b>[ VILLAGE BONDS ]</b>");
-                    sb.AppendLine("-----------------------------------------");
-                    sb.AppendLine("<color=#A0A0A0><i>Aim at a specific citizen to view their private bonds.</i></color>\n");
-                    // ... fallback to old full list
-                    foreach (var npc in npcs)
-                    {
-                        var loves = new List<string>();
-                        var friends = new List<string>();
-                        var rivals = new List<string>();
+                    Color color = Color.gray;
+                    if (rel > 50) color = VisualUtils.PineGreen;
+                    else if (rel < -50) color = VisualUtils.Terracotta;
 
-                        foreach (var other in npcs)
-                        {
-                            if (npc == other) continue;
-                            int score = GPOyun.Core.ServiceLocator.Get<GPOyun.Core.RelationshipMatrix>().GetRelationship(npc.NpcId, other.NpcId);
-                            if (score >= 86) loves.Add($"{other.NpcName} ({score})");
-                            else if (score >= 50) friends.Add($"{other.NpcName} ({score})");
-                            else if (score <= -50) rivals.Add($"{other.NpcName} ({score})");
-                        }
-
-                        if (loves.Count > 0 || friends.Count > 0 || rivals.Count > 0)
-                        {
-                            sb.AppendLine($"<color=#E6C03C><b>{npc.NpcName}</b></color>");
-                            if (loves.Count > 0) sb.AppendLine($"  <color=#FF69B4>Loves: </color> {string.Join(", ", loves)}");
-                            if (friends.Count > 0) sb.AppendLine($"  <color=#327CB2>Friends:</color> {string.Join(", ", friends)}");
-                            if (rivals.Count > 0) sb.AppendLine($"  <color=#D95933>Rivals: </color> {string.Join(", ", rivals)}");
-                            sb.AppendLine();
-                        }
-                    }
+                    string relText = $"{other.NpcName}: Rel({rel}) Trust({trust})";
+                    CreateTextCell(relText, color, false, focusContainer);
                 }
-                relationshipListText.text = sb.ToString();
+            }
+        }
+
+        private string FormatName(string fullName)
+        {
+            if (string.IsNullOrEmpty(fullName)) return "?";
+            var parts = fullName.Split(' ');
+            return parts[0].Length > 6 ? parts[0].Substring(0, 6) + "." : parts[0];
+        }
+
+        private Color GetRelationshipColor(int score)
+        {
+            // Range: -100 to 100
+            if (score > 50) return new Color(0.2f, 0.6f, 0.3f, 0.8f); // Friendly Green
+            if (score > 10) return new Color(0.4f, 0.6f, 0.4f, 0.5f); // Mild Green
+            if (score < -50) return new Color(0.8f, 0.2f, 0.2f, 0.8f); // Enemy Red
+            if (score < -10) return new Color(0.6f, 0.4f, 0.4f, 0.5f); // Mild Red
+            return new Color(0.3f, 0.3f, 0.35f, 0.5f); // Neutral Gray
+        }
+
+        private string GetTrustIcon(int trust)
+        {
+            if (trust < 30) return "🐍"; // Snake / Untrustworthy
+            if (trust > 80) return "🤝"; // Handshake / High Trust
+            return "";
+        }
+
+        private void CreateTextCell(string text, Color textColor, bool isHeader, Transform parent)
+        {
+            GameObject cell = new GameObject("Cell_Text");
+            cell.transform.SetParent(parent, false);
+            
+            var bg = cell.AddComponent<Image>();
+            bg.color = isHeader ? new Color(0.1f, 0.1f, 0.15f, 0.8f) : new Color(0,0,0,0);
+
+            GameObject txtGo = new GameObject("Text");
+            txtGo.transform.SetParent(cell.transform, false);
+            var txt = txtGo.AddComponent<Text>();
+            txt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            txt.fontSize = 9;
+            txt.color = textColor;
+            txt.alignment = TextAnchor.MiddleCenter;
+            txt.text = text;
+
+            var rect = txtGo.GetComponent<RectTransform>();
+            rect.anchorMin = Vector2.zero; rect.anchorMax = Vector2.one;
+            rect.offsetMin = rect.offsetMax = Vector2.zero;
+
+            _cellPool.Add(cell);
+        }
+
+        private void CreateColorCell(string text, Color bgColor, Transform parent)
+        {
+            GameObject cell = new GameObject("Cell_Color");
+            cell.transform.SetParent(parent, false);
+            
+            var bg = cell.AddComponent<Image>();
+            bg.color = bgColor;
+
+            if (!string.IsNullOrEmpty(text))
+            {
+                GameObject txtGo = new GameObject("Icon");
+                txtGo.transform.SetParent(cell.transform, false);
+                var txt = txtGo.AddComponent<Text>();
+                txt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                txt.fontSize = 10;
+                txt.color = Color.white;
+                txt.alignment = TextAnchor.MiddleCenter;
+                txt.text = text;
+
+                var rect = txtGo.GetComponent<RectTransform>();
+                rect.anchorMin = Vector2.zero; rect.anchorMax = Vector2.one;
+                rect.offsetMin = rect.offsetMax = Vector2.zero;
             }
 
-            // 2. RIGHT PANEL (Brain View or Observation Logs)
-            if (observationLogsText != null)
-            {
-                System.Text.StringBuilder sb = new System.Text.StringBuilder();
-
-                if (targetNpc != null && targetNpc.Brain != null)
-                {
-                    var brain = targetNpc.Brain;
-                    var needs = targetNpc.GetComponent<NPC.UtilityAI.NPCNeeds>();
-                    
-                    sb.AppendLine($"<color=#E6C03C><b>[ {targetNpc.NpcName.ToUpper()}'S BRAIN STATE ]</b></color>");
-                    sb.AppendLine("-----------------------------------------");
-                    
-                    sb.AppendLine($"<b>Emotion:</b> {targetNpc.currentEmotion.ToString().ToUpper()}");
-                    sb.AppendLine($"<b>Current Aim:</b> {brain.CurrentAim}");
-                    sb.AppendLine($"<b>Context:</b> <i>{brain.CurrentContext}</i>");
-                    
-                    if (brain.IsWhimActive)
-                    {
-                        sb.AppendLine($"\n<color=#FFD700><b>[ ! ] CHAOTIC WHIM ACTIVE</b></color>");
-                    }
-
-                    if (needs != null)
-                    {
-                        sb.AppendLine("\n<b>[ PHYSIOLOGICAL HOMEOSTASIS ]</b>");
-                        sb.AppendLine("<color=#A0A0A0><i>Format: Current State (Comfort Zone)</i></color>");
-                        
-                        string EvaluateHomeostasis(float current, float ideal, string lowLabel, string highLabel)
-                        {
-                            float delta = current - ideal;
-                            if (delta > 20f) return $"<color=#FF5555>({highLabel}!)</color>";
-                            if (delta < -20f) return $"<color=#FF5555>({lowLabel}!)</color>";
-                            return "<color=#55FF55>(Comfortable)</color>";
-                        }
-
-                        sb.AppendLine($"Energy: {needs.Energy:F0}/100");
-                        
-                        string socStatus = EvaluateHomeostasis(needs.SocialDesire, brain.ComfortZone.IdealSocial, "Smothered", "Lonely");
-                        sb.AppendLine($"Social Need: {needs.SocialDesire:F0} (Ideal: {brain.ComfortZone.IdealSocial:F0}) {socStatus}");
-                        
-                        string boreStatus = EvaluateHomeostasis(needs.Boredom, brain.ComfortZone.IdealBoredom, "Overwhelmed", "Bored");
-                        sb.AppendLine($"Boredom: {needs.Boredom:F0} (Ideal: {brain.ComfortZone.IdealBoredom:F0}) {boreStatus}");
-                        
-                        string stressStatus = EvaluateHomeostasis(needs.Introversion, brain.ComfortZone.IdealIntroversion, "Understimulated", "Stressed");
-                        sb.AppendLine($"Stress/Introversion: {needs.Introversion:F0} (Ideal: {brain.ComfortZone.IdealIntroversion:F0}) {stressStatus}");
-                    }
-                    
-                    sb.AppendLine($"\n<b>Opinion of You:</b> {targetNpc.relationshipWithPlayer}");
-                }
-                else
-                {
-                    sb.AppendLine("<b>[ GLOBAL SOCIAL TIMELINE ]</b>");
-                    sb.AppendLine("-----------------------------------------");
-                    sb.AppendLine("<color=#A0A0A0><i>Aim at a specific citizen to inspect their Brain State.</i></color>\n");
-
-                    if (JournalManager.Instance != null)
-                    {
-                        var logs = JournalManager.Instance.GetAllLogs();
-                        if (logs.Count == 0)
-                        {
-                            sb.AppendLine("\n[ NO OBSERVATIONS YET ]");
-                        }
-                        else
-                        {
-                            // Print logs in reverse chronological order
-                            for (int i = logs.Count - 1; i >= 0; i--)
-                            {
-                                var log = logs[i];
-                                string colorTag = "#" + ColorUtility.ToHtmlStringRGB(log.ThreadColor);
-                                sb.AppendLine($"<color={colorTag}>[*]</color> {log.Description}");
-                            }
-                        }
-                    }
-                }
-                observationLogsText.text = sb.ToString();
-            }
+            _cellPool.Add(cell);
         }
 
         private void SetupUI()
         {
+            if (journalCanvasGroup != null) return;
+            
             Canvas canvas = VisualUtils.CreateBaseCanvas("JOURNAL_CANVAS", 800, transform);
             journalCanvasGroup = canvas.gameObject.AddComponent<CanvasGroup>();
             journalCanvasGroup.alpha = 0f;
             journalCanvasGroup.blocksRaycasts = false;
             journalCanvasGroup.interactable = false;
 
-            // Dark semi-transparent background
+            // Blur/Frosted Glass background
             GameObject bg = new GameObject("BG");
             bg.transform.SetParent(canvas.transform, false);
             var bgImg = bg.AddComponent<Image>();
-            bgImg.color = new Color(0.04f, 0.04f, 0.06f, 0.96f);
+            bgImg.color = new Color(0.05f, 0.05f, 0.08f, 0.98f);
             var bgRect = bg.GetComponent<RectTransform>();
             bgRect.anchorMin = Vector2.zero; bgRect.anchorMax = Vector2.one;
             bgRect.offsetMin = bgRect.offsetMax = Vector2.zero;
@@ -288,39 +411,89 @@ namespace GPOyun.UI
             var titleTxt = titleGo.AddComponent<Text>();
             titleTxt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             titleTxt.fontSize = 40; titleTxt.color = VisualUtils.StuccoWhite;
-            titleTxt.text = "OBSERVATIONAL JOURNAL  [J]";
+            titleTxt.text = "SOCIAL NETWORK MATRIX  [J]";
             titleTxt.alignment = TextAnchor.MiddleCenter;
             var titleRect = titleGo.GetComponent<RectTransform>();
             titleRect.anchorMin = new Vector2(0, 1); titleRect.anchorMax = new Vector2(1, 1);
-            titleRect.anchoredPosition = new Vector2(0, -45); titleRect.sizeDelta = new Vector2(0, 60);
+            titleRect.anchoredPosition = new Vector2(0, -60); titleRect.sizeDelta = new Vector2(0, 60);
 
-            // Left panel: Relationship Threads
-            GameObject leftPanel = new GameObject("LeftPanel");
-            leftPanel.transform.SetParent(canvas.transform, false);
-            var leftRect = leftPanel.AddComponent<RectTransform>();
-            leftRect.anchorMin = new Vector2(0.02f, 0.05f); leftRect.anchorMax = new Vector2(0.48f, 0.85f);
-            leftRect.offsetMin = leftRect.offsetMax = Vector2.zero;
-            
-            relationshipListText = leftPanel.AddComponent<Text>();
-            relationshipListText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            relationshipListText.fontSize = 20;
-            relationshipListText.color = Color.white;
-            relationshipListText.alignment = TextAnchor.UpperLeft;
-            relationshipListText.supportRichText = true;
+            // Subtitle instructions
+            GameObject subGo = new GameObject("Subtitle");
+            subGo.transform.SetParent(canvas.transform, false);
+            var subTxt = subGo.AddComponent<Text>();
+            subTxt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            subTxt.fontSize = 16; subTxt.color = new Color(0.6f, 0.6f, 0.6f);
+            subTxt.text = "Rows = Source NPC | Columns = Target NPC | Green = Friendly, Red = Hostile | 🐍 = Untrustworthy, ❤️ = Love";
+            subTxt.alignment = TextAnchor.MiddleCenter;
+            var subRect = subGo.GetComponent<RectTransform>();
+            subRect.anchorMin = new Vector2(0, 1); subRect.anchorMax = new Vector2(1, 1);
+            subRect.anchoredPosition = new Vector2(0, -100); subRect.sizeDelta = new Vector2(0, 30);
 
-            // Right panel: Observation Logs
-            GameObject rightPanel = new GameObject("RightPanel");
-            rightPanel.transform.SetParent(canvas.transform, false);
-            var rightRect = rightPanel.AddComponent<RectTransform>();
-            rightRect.anchorMin = new Vector2(0.52f, 0.05f); rightRect.anchorMax = new Vector2(0.98f, 0.85f);
-            rightRect.offsetMin = rightRect.offsetMax = Vector2.zero;
+            // Matrix Container
+            Transform existingMatrix = canvas.transform.Find("MatrixContainer");
+            GameObject matrixGo;
+            if (existingMatrix == null)
+            {
+                matrixGo = new GameObject("MatrixContainer");
+                matrixGo.transform.SetParent(canvas.transform, false);
+                
+                var matrixRect = matrixGo.AddComponent<RectTransform>();
+                // Bounds the matrix to center 70% of screen so blurred background is visible
+                matrixRect.anchorMin = new Vector2(0.15f, 0.15f);
+                matrixRect.anchorMax = new Vector2(0.85f, 0.85f);
+                matrixRect.offsetMin = Vector2.zero;
+                matrixRect.offsetMax = Vector2.zero;
 
-            observationLogsText = rightPanel.AddComponent<Text>();
-            observationLogsText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            observationLogsText.fontSize = 20;
-            observationLogsText.color = Color.white;
-            observationLogsText.alignment = TextAnchor.UpperLeft;
-            observationLogsText.supportRichText = true;
+                var grid = matrixGo.AddComponent<GridLayoutGroup>();
+                grid.childAlignment = TextAnchor.MiddleCenter;
+            }
+            else
+            {
+                matrixGo = existingMatrix.gameObject;
+            }
+
+            // Feed Container
+            Transform existingFeed = canvas.transform.Find("FeedContainer");
+            if (existingFeed == null)
+            {
+                var feedGo = new GameObject("FeedContainer");
+                feedGo.transform.SetParent(canvas.transform, false);
+                var feedRect = feedGo.AddComponent<RectTransform>();
+                feedRect.anchorMin = new Vector2(0.2f, 0.1f);
+                feedRect.anchorMax = new Vector2(0.8f, 0.9f);
+                feedRect.offsetMin = Vector2.zero; feedRect.offsetMax = Vector2.zero;
+
+                var vLayout = feedGo.AddComponent<VerticalLayoutGroup>();
+                vLayout.childAlignment = TextAnchor.UpperCenter;
+                vLayout.spacing = 8f;
+                
+                var feedBgImg = feedGo.AddComponent<Image>();
+                feedBgImg.color = new Color(0.05f, 0.05f, 0.08f, 0.95f);
+                
+                feedGo.SetActive(false);
+            }
+
+            // Focus Container
+            Transform existingFocus = canvas.transform.Find("FocusContainer");
+            if (existingFocus == null)
+            {
+                var focusGo = new GameObject("FocusContainer");
+                focusGo.transform.SetParent(canvas.transform, false);
+                var focusRect = focusGo.AddComponent<RectTransform>();
+                focusRect.anchorMin = new Vector2(0.2f, 0.1f);
+                focusRect.anchorMax = new Vector2(0.8f, 0.9f);
+                focusRect.offsetMin = Vector2.zero; focusRect.offsetMax = Vector2.zero;
+
+                var vLayout = focusGo.AddComponent<VerticalLayoutGroup>();
+                vLayout.childAlignment = TextAnchor.UpperCenter;
+                vLayout.spacing = 8f;
+                focusGo.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+                
+                var focusBgImg = focusGo.AddComponent<Image>();
+                focusBgImg.color = new Color(0.05f, 0.05f, 0.08f, 0.95f);
+                
+                focusGo.SetActive(false);
+            }
 
             VisualUtils.EnsureCanvasRenderers(transform);
         }

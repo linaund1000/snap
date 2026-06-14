@@ -30,7 +30,7 @@ namespace GPOyun.CameraSystem
 
         private void Update()
         {
-            if (GPOyun.Core.ServiceLocator.Get<GPOyun.Core.GameManager>() != null && GPOyun.Core.ServiceLocator.Get<GPOyun.Core.GameManager>().CurrentState == GameManager.GameState.Paused)
+            if (GPOyun.Core.ServiceLocator.TryGet<GPOyun.Core.GameManager>(out var gm) && gm.CurrentState == GameManager.GameState.Paused)
             {
                 return;
             }

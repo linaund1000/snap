@@ -22,6 +22,20 @@ namespace GPOyun.Player
         private CharacterController _cc;
         private float _verticalVelocity;
 
+        private bool _isForcedToLook = false;
+        private Vector3 _forcedTargetPos;
+        private float _forceLookTimer = 0f;
+        private float _forceLookDuration = 0f;
+
+        public void ForceLookAt(Vector3 targetPos, float duration)
+        {
+            _isForcedToLook = true;
+            _forcedTargetPos = targetPos;
+            _forceLookDuration = duration;
+            _forceLookTimer = 0f;
+            Debug.Log($"[PlayerController] Forced to look at target for {duration} seconds.");
+        }
+
         private void Awake()
         {
             _cc = GetComponent<CharacterController>();
@@ -40,6 +54,43 @@ namespace GPOyun.Player
             text.alignment     = TextAlignment.Center;
             text.color         = Color.white;
             text.fontStyle     = FontStyle.Bold;
+
+            var emojiGo = new GameObject("Emoji_Label");
+            emojiGo.transform.SetParent(transform);
+            emojiGo.transform.localPosition = new Vector3(0, 2.6f, 0);
+            _emojiLabel = emojiGo.AddComponent<TextMesh>();
+            _emojiLabel.characterSize = 0.5f;
+            _emojiLabel.anchor        = TextAnchor.MiddleCenter;
+            _emojiLabel.alignment     = TextAlignment.Center;
+            _emojiLabel.text          = "";
+        }
+
+        private TextMesh _emojiLabel;
+        private float _emojiTimer;
+
+        private void EmitPlayerEmoji(string emoji, GPOyun.NPC.EmotionType emotion)
+        {
+            if (_emojiLabel != null)
+            {
+                _emojiLabel.text = emoji;
+                _emojiTimer = 2f;
+            }
+
+            Collider[] colliders = Physics.OverlapSphere(transform.position, 15f);
+            foreach (var col in colliders)
+            {
+                var npc = col.GetComponentInParent<GPOyun.NPC.NPCController>();
+                if (npc != null)
+                {
+                    if (emotion == GPOyun.NPC.EmotionType.Happy)
+                        npc.relationshipWithPlayer += 5;
+                    else if (emotion == GPOyun.NPC.EmotionType.Angry)
+                        npc.relationshipWithPlayer -= 10;
+
+                    npc.relationshipWithPlayer = Mathf.Clamp(npc.relationshipWithPlayer, -100, 100);
+                    npc.TriggerReaction(emotion == GPOyun.NPC.EmotionType.Happy ? "😊" : "💢", Color.white);
+                }
+            }
         }
 
         private void Update()
@@ -49,21 +100,27 @@ namespace GPOyun.Player
             if (keyboard == null) return;
 
             // ── TAB RELATIONSHIP OVERLAY ──────────────────────────────────
-            if (GPOyun.UI.HUDManager.Instance != null)
+            if (keyboard.tabKey.wasPressedThisFrame && GPOyun.Core.ServiceLocator.TryGet<GPOyun.Core.RelationshipMatrix>(out var rm))
             {
-                GPOyun.UI.HUDManager.Instance.relationshipOverlayActive = keyboard.tabKey.isPressed;
-            }
-            if (keyboard.tabKey.wasPressedThisFrame && GPOyun.Core.ServiceLocator.Get<GPOyun.Core.RelationshipMatrix>() != null)
-            {
-                GPOyun.Core.ServiceLocator.Get<GPOyun.Core.RelationshipMatrix>().PrintGossipReport();
+                // Removed legacy Tab scoreboard. J (Journal) handles matrix now.
             }
 
             // ── FSM STATE PAUSED CHECK ────────────────────────────────────
-            if (GPOyun.Core.ServiceLocator.Get<GPOyun.Core.GameManager>() != null && GPOyun.Core.ServiceLocator.Get<GPOyun.Core.GameManager>().CurrentState == GameManager.GameState.Paused)
+            if (GPOyun.Core.ServiceLocator.TryGet<GPOyun.Core.GameManager>(out var gm) && gm.CurrentState == GameManager.GameState.Paused)
             {
                 _verticalVelocity = -1f;
                 return;
             }
+
+            // ── PLAYER EMOJIS ─────────────────────────────────────────────
+            if (_emojiTimer > 0)
+            {
+                _emojiTimer -= Time.deltaTime;
+                if (_emojiTimer <= 0 && _emojiLabel != null) _emojiLabel.text = "";
+            }
+
+            if (keyboard.digit1Key.wasPressedThisFrame) EmitPlayerEmoji("👋", GPOyun.NPC.EmotionType.Happy);
+            if (keyboard.digit2Key.wasPressedThisFrame) EmitPlayerEmoji("😡", GPOyun.NPC.EmotionType.Angry);
 
             // ── MOVEMENT ──────────────────────────────────────────────────
             float moveZ = 0f;
@@ -71,15 +128,36 @@ namespace GPOyun.Player
             if (keyboard.sKey.isPressed || keyboard.downArrowKey.isPressed)  moveZ = -1f;
 
             // ── ROTATION ──────────────────────────────────────────────────
-            float rotY = 0f;
-            if (keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed)  rotY = -1f;
-            if (keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed) rotY =  1f;
+            if (_isForcedToLook)
+            {
+                _forceLookTimer += Time.deltaTime;
+                if (_forceLookTimer >= _forceLookDuration)
+                {
+                    _isForcedToLook = false;
+                }
+                else
+                {
+                    Vector3 dir = (_forcedTargetPos - transform.position).normalized;
+                    dir.y = 0; // Horizontal only
+                    if (dir != Vector3.zero)
+                    {
+                        Quaternion targetRot = Quaternion.LookRotation(dir);
+                        transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.deltaTime * 5f);
+                    }
+                }
+            }
+            else
+            {
+                float rotY = 0f;
+                if (keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed)  rotY = -1f;
+                if (keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed) rotY =  1f;
 
-            // Mouse horizontal also rotates (only when mouse is locked)
-            if (mouse != null && Cursor.lockState == CursorLockMode.Locked)
-                rotY += mouse.delta.ReadValue().x * mouseSensitivity;
+                // Mouse horizontal also rotates (only when mouse is locked)
+                if (mouse != null && Cursor.lockState == CursorLockMode.Locked)
+                    rotY += mouse.delta.ReadValue().x * mouseSensitivity;
 
-            transform.Rotate(Vector3.up, rotY * rotationSpeed * Time.deltaTime);
+                transform.Rotate(Vector3.up, rotY * rotationSpeed * Time.deltaTime);
+            }
 
             // ── GRAVITY ───────────────────────────────────────────────────
             if (_cc.isGrounded)
@@ -92,9 +170,12 @@ namespace GPOyun.Player
             _cc.Move(move * Time.deltaTime);
 
             // ── CURSOR LOCK ────────────────────────────────────────────────
-            // Click → lock. ESC is handled exclusively by SettingsController.
-            if (mouse != null && mouse.leftButton.wasPressedThisFrame && Cursor.lockState != CursorLockMode.Locked)
+            // Click -> lock only allowed if no menus are open!
+            bool isMenuOpen = GPOyun.Core.ServiceLocator.TryGet<GPOyun.UI.UIManager>(out var uiMgr) && uiMgr.IsAnyMenuOpen();
+            if (!isMenuOpen && mouse != null && mouse.leftButton.wasPressedThisFrame && Cursor.lockState != CursorLockMode.Locked)
+            {
                 Cursor.lockState = CursorLockMode.Locked;
+            }
         }
     }
 }

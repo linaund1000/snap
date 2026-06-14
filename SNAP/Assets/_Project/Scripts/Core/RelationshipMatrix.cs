@@ -23,6 +23,7 @@ namespace GPOyun.Core
     public class RelationshipMatrix : MonoBehaviour
     {
         private readonly Dictionary<NPCPair, int> _relationsTable = new();
+        private readonly Dictionary<NPCPair, int> _trustTable = new();
         private readonly Dictionary<NPCPair, List<string>> _opinions = new();
 
         private void Awake()
@@ -38,8 +39,9 @@ namespace GPOyun.Core
         public void InitializeMatrix()
         {
             _relationsTable.Clear();
+            _trustTable.Clear();
             _opinions.Clear();
-            Debug.Log("[RelationshipMatrix] Initialized empty social network with opinions.");
+            Debug.Log("[RelationshipMatrix] Initialized empty social network with opinions and trust.");
         }
 
         public int GetRelationship(int idA, int idB)
@@ -47,6 +49,33 @@ namespace GPOyun.Core
             if (idA == idB) return 100; // Self-relationship is perfect
             var key = new NPCPair(idA, idB);
             return _relationsTable.TryGetValue(key, out int score) ? score : 0;
+        }
+
+        public int GetTrust(int idA, int idB)
+        {
+            if (idA == idB) return 100; // Trust self perfectly
+            var key = new NPCPair(idA, idB);
+            return _trustTable.TryGetValue(key, out int score) ? score : 50; // Default trust is 50
+        }
+
+        public void SetTrustRaw(int idA, int idB, int trustScore)
+        {
+            if (idA == idB) return;
+            var key = new NPCPair(idA, idB);
+            _trustTable[key] = Mathf.Clamp(trustScore, 0, 100);
+        }
+
+        public void ModifyTrust(int idA, int idB, int delta)
+        {
+            if (idA == idB) return;
+            var key = new NPCPair(idA, idB);
+            int current = GetTrust(idA, idB);
+            _trustTable[key] = Mathf.Clamp(current + delta, 0, 100);
+            
+            if (delta < -10)
+            {
+                Debug.LogWarning($"[Social Memory] NPC {idA} lost trust in NPC {idB}! (Trust: {_trustTable[key]})");
+            }
         }
 
         public int GetFavorite(int npcId)

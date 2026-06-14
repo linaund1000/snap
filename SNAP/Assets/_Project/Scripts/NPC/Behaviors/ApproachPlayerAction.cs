@@ -8,7 +8,6 @@ namespace GPOyun.NPC.UtilityAI
     public class ApproachPlayerAction : MoveAction
     {
         private Transform _playerTransform;
-        private bool _hasMetPlayer = false;
 
         public override void Initialize(NPCController controller, NPCNeeds needs)
         {
@@ -16,35 +15,6 @@ namespace GPOyun.NPC.UtilityAI
             ActionName = "ApproachPlayer";
         }
 
-        public override float CalculateUtility()
-        {
-            // If they've already introduced themselves recently, don't do it again
-            if (_hasMetPlayer) return 0f;
-
-            // They must be somewhat bored and have high social desire
-            if (Needs.SocialDesire < 30f) return 0f;
-
-            // Find player
-            if (_playerTransform == null)
-            {
-                var player = GameObject.FindGameObjectWithTag("Player");
-                if (player != null) _playerTransform = player.transform;
-            }
-
-            if (_playerTransform == null) return 0f;
-
-            // If player is close enough to see
-            float dist = Vector3.Distance(transform.position, _playerTransform.position);
-            if (dist > 30f) return 0f; // Too far
-
-            // If they see the player, and they haven't met them, HIGH utility to go say hi!
-            float utility = BaseUtility + 60f; 
-            
-            // If they actually LIKE the player, they are even more likely to come say hi
-            if (Controller.relationshipWithPlayer > 20) utility += 30f;
-
-            return Mathf.Max(0, utility);
-        }
 
         public override IEnumerator Execute()
         {
@@ -62,6 +32,15 @@ namespace GPOyun.NPC.UtilityAI
                 Vector3 lookDir = (_playerTransform.position - transform.position).normalized;
                 lookDir.y = 0;
                 if (lookDir != Vector3.zero) transform.rotation = Quaternion.LookRotation(lookDir);
+
+                // Grab player's attention physically!
+                var playerController = _playerTransform.GetComponent<GPOyun.Player.PlayerController>();
+                if (playerController != null)
+                {
+                    // Force player to look at NPC's face
+                    Vector3 myFacePos = transform.position + Vector3.up * 1.5f;
+                    playerController.ForceLookAt(myFacePos, 1.5f);
+                }
 
                 // Introduce!
                 Controller.currentEmotion = EmotionType.Happy;
@@ -81,23 +60,12 @@ namespace GPOyun.NPC.UtilityAI
 
                 Needs.SatisfySocial(40f);
                 
-                _hasMetPlayer = true; // Don't spam the player
-
                 // Stand there and smile for a few seconds
                 yield return new WaitForSeconds(Random.Range(3f, 5f));
-                
-                // Allow meeting again after a long cooldown (e.g. 5 minutes)
-                StartCoroutine(ResetMeetCooldown());
                 break;
             }
 
             _isExecuting = false;
-        }
-
-        private IEnumerator ResetMeetCooldown()
-        {
-            yield return new WaitForSeconds(300f);
-            _hasMetPlayer = false;
         }
     }
 }

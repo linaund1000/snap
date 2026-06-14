@@ -16,19 +16,6 @@ namespace GPOyun.NPC.UtilityAI
             ActionName = "GroupWalk";
         }
 
-        public override float CalculateUtility()
-        {
-            // Only naturally triggered if we have a deficit in boredom and want to walk
-            if (Controller.Brain != null)
-            {
-                float currentBoredomDeficit = Mathf.Abs(Needs.Boredom - Controller.Brain.ComfortZone.IdealBoredom);
-                if (currentBoredomDeficit > 20f && Needs.Energy > 40f)
-                {
-                    return BaseUtility + currentBoredomDeficit;
-                }
-            }
-            return 0f;
-        }
 
         public override IEnumerator Execute()
         {

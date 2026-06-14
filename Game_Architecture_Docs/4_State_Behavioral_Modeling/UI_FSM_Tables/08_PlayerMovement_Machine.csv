@@ -1,0 +1,7 @@
+CurrentState,InputTrigger,Condition,NextState,OutputAction
+Free,Req_SlowMove,None,Slow,ApplySpeedDebuff
+Free,Req_BlockMove,None,Blocked,HaltMovement
+Slow,Req_FreeMove,None,Free,RemoveSpeedDebuff
+Slow,Req_BlockMove,None,Blocked,HaltMovement
+Blocked,Req_FreeMove,None,Free,RestoreMovement
+Blocked,Req_SlowMove,None,Slow,RestoreMovementWithDebuff

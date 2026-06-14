@@ -14,11 +14,6 @@ namespace GPOyun.NPC.UtilityAI
             ActionName = "FleePlayer";
         }
 
-        public override float CalculateUtility()
-        {
-            if (Needs.IsPlayerHostile && Needs.IsPlayerNearby) return 120f; 
-            return 0f;
-        }
 
         public override IEnumerator Execute()
         {

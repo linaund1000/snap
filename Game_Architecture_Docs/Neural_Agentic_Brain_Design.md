@@ -64,3 +64,19 @@ Mevcut mimarideki `NPCState` Enum yapısı Neural Brain vizyonuna aykırıdır (
 | `NPCState.Wandering` | `WanderAction.cs` | Durum bildirimi iptal edilecek, UtilityBrain eylemi yürütecek. |
 | `NPCState.Idle` | (Yok - Zaten baz aktivasyon) | Action bitimlerinde Idle'a dönme kodu silinecek, beyin zaten boşta kalıp yeni eylem seçecek. |
 | `NPCState.Hugging` | `SocializeAction.cs` vb. | `_gestures.PlayAffection()` ilgili sosyal eylem içine taşınacak. |
+
+---
+
+## 4. Dinamik UX ve Sistem Geri Bildirimi (Dynamic UX & System Feedback)
+Oyuncu ve NPC'ler arasındaki etkileşim sadece mekanik bir düzeyde kalmamalı, karşılıklı bir diyaloğa (insani ilişki) dönüşmelidir. Bunun için şu dinamik UX prensipleri uygulanacaktır:
+
+### 4.1. Fotoğraf Yorumlama (Photo Captioning & NPC Influence)
+- **Mekanik:** Oyuncu bir fotoğraf çektiğinde veya gazeteyi basmadan önce o fotoğrafın altına bir **"String Yorum (Caption)"** yazabilir.
+- **Etki (Feedback):** Yazılan bu yorum sadece UI üzerinde kalmaz; gazete yayınlandığında veya anlık olarak NPC'lerin `Input Layer`'ına bir duygu değişkeni olarak pompalanır. NPC'ler haberin içeriğinden çok, oyuncunun eklediği yorumun "tonuna" (Agresif, komik, kışkırtıcı) göre tepki verir. Oyuncu kendi kelimeleriyle dünyayı manipüle etmiş olur.
+
+### 4.2. Göz Kontağı ve İlgiyi Çalma (Physical Attention Grabbing)
+- **Mekanik:** Oyuncunun varlığı pasif bir gözlemci olmamalıdır. Eğer bir NPC oyuncuya çok sinirlenmişse veya ona kritik bir şey anlatmak istiyorsa, oyuncunun odağını **fiziksel olarak üzerine çekebilmelidir.**
+- **Etki (Feedback):** NPC oyuncunun yanına geldiğinde kamerayı (Player Camera) yumuşak ama zorlayıcı bir interpolasyonla kendine çevirir. "Bana bak, seninle konuşuyorum!" hissi yaratılır. Sesli diyalog olmasa bile, vücut dili ve UI/Camera Force ile aşırı güçlü bir etkileşim kurulur.
+
+### 4.3. Expresif Sistem Geri Bildirimleri (Expressive UI & System Cues)
+- Sadece emojiler değil, ekran titremeleri (Screen Shake), UI çerçevesinin kızarması (Anger Vignette) veya anlık işitsel efektler (kulak çınlaması) sayesinde oyun dünyası (System), NPC'nin iç dünyasını oyuncuya organik bir şekilde yansıtır. Geri bildirimler her zaman iki yönlü olmalıdır.

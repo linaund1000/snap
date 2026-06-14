@@ -1,0 +1,3 @@
+CurrentState,InputTrigger,Condition,NextState,OutputAction
+Visible,Req_HideHUD,None,Hidden,HideMainHUD
+Hidden,Req_ShowHUD,None,Visible,ShowMainHUD

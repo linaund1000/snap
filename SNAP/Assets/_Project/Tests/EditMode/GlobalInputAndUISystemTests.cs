@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.TestTools;
 using GPOyun.Core;
 using GPOyun.UI;
-using GPOyun.InputSystem;
+using GPOyun.Core.FSM;
 
 namespace GPOyun.Tests
 {
@@ -12,7 +12,7 @@ namespace GPOyun.Tests
     {
         private GameObject _uiRoot;
         private GameManager _gameManager;
-        private GlobalInputListener _inputListener;
+        private InputRouter _inputListener;
         private NewspaperBoardUI _boardUI;
         private PhotoGalleryUI _galleryUI;
         private JournalUI _journalUI;
@@ -50,9 +50,9 @@ namespace GPOyun.Tests
             _settingsUI.Initialize(cg);
 
             // Add Input Listener
-            var inputGo = new GameObject("GlobalInputListener");
+            var inputGo = new GameObject("InputRouter");
             inputGo.transform.SetParent(_uiRoot.transform);
-            _inputListener = inputGo.AddComponent<GlobalInputListener>();
+            _inputListener = inputGo.AddComponent<InputRouter>();
         }
 
         [TearDown]
@@ -70,7 +70,7 @@ namespace GPOyun.Tests
             Assert.IsNotNull(_galleryUI, "PhotoGalleryUI should be instantiated");
             Assert.IsNotNull(_journalUI, "JournalUI should be instantiated");
             Assert.IsNotNull(_settingsUI, "SettingsController should be instantiated");
-            Assert.IsNotNull(_inputListener, "GlobalInputListener should be instantiated");
+            Assert.IsNotNull(_inputListener, "InputRouter should be instantiated");
 
             Assert.IsNotNull(_boardUI.boardCanvasGroup, "NewspaperBoardUI CanvasGroup should be initialized");
             Assert.IsNotNull(_galleryUI.galleryGroup, "PhotoGalleryUI CanvasGroup should be initialized");

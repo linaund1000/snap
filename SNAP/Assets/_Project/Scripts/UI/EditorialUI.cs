@@ -22,6 +22,40 @@ namespace GPOyun.UI
 
         private bool _isExplicitlyOpen = false;
         private bool _wasAutoOpenedToday = false;
+        private string _typedHeadline = "";
+
+        private void OnEnable()
+        {
+            var keyboard = UnityEngine.InputSystem.Keyboard.current;
+            if (keyboard != null) keyboard.onTextInput += OnTextInput;
+        }
+
+        private void OnDisable()
+        {
+            var keyboard = UnityEngine.InputSystem.Keyboard.current;
+            if (keyboard != null) keyboard.onTextInput -= OnTextInput;
+        }
+
+        private void OnTextInput(char c)
+        {
+            if (!_isExplicitlyOpen) return;
+
+            if (c == '\b') // Backspace
+            {
+                if (_typedHeadline.Length > 0)
+                    _typedHeadline = _typedHeadline.Substring(0, _typedHeadline.Length - 1);
+            }
+            else if (c == '\n' || c == '\r') { /* Ignore */ }
+            else if (char.IsControl(c)) { /* Ignore other controls */ }
+            else
+            {
+                if (_typedHeadline.Length < 40) // Limit length
+                    _typedHeadline += c;
+            }
+
+            if (statusText != null)
+                statusText.text = "HEADLINE: " + (_typedHeadline.Length > 0 ? _typedHeadline : "Type something...");
+        }
 
         private void Awake()
         {
@@ -73,17 +107,18 @@ namespace GPOyun.UI
             PhotoGalleryUI.Instance?.Hide();
             JournalUI.Instance?.Hide();
 
-            if (GPOyun.Core.ServiceLocator.TryGet<GPOyun.Core.GameManager>(out var gmPause)) gmPause.PauseGame();
+            GPOyun.UI.UIManager.Instance?.PushMenu(gameObject);
 
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
+            
+            
 
             editorialCanvasGroup.alpha = 1f;
             editorialCanvasGroup.blocksRaycasts = true;
             editorialCanvasGroup.interactable = true;
             _isExplicitlyOpen = true;
+            _typedHeadline = "";
             
-            if (statusText != null) statusText.text = "EDITORIAL DESK";
+            if (statusText != null) statusText.text = "HEADLINE: Type something...";
             Debug.Log("[EditorialUI] Workspace active.");
         }
 
@@ -92,10 +127,10 @@ namespace GPOyun.UI
             if (!_isExplicitlyOpen) return;
             _isExplicitlyOpen = false;
 
-            if (GPOyun.Core.ServiceLocator.TryGet<GPOyun.Core.GameManager>(out var gmResume)) gmResume.ResumeGame();
+            GPOyun.UI.UIManager.Instance?.PopMenu(gameObject);
 
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
+            
+            
 
             if (editorialCanvasGroup != null)
             {
@@ -112,7 +147,9 @@ namespace GPOyun.UI
             
             var photos = NewspaperManager.Instance.GetTodaysPhotos();
             NewsCategory finalCat = NewsCategory.Local;
-            string headline = "A Quiet Day";
+            
+            // Use user-typed headline if available, otherwise fallback to standard
+            string headline = string.IsNullOrWhiteSpace(_typedHeadline) ? "A Quiet Day" : _typedHeadline;
 
             if (photos != null && photos.Count > 0)
             {
@@ -120,7 +157,8 @@ namespace GPOyun.UI
                 if (lastPhoto.PrimarySubject != null)
                 {
                     finalCat = lastPhoto.PrimarySubject.PrimaryCategory;
-                    headline = $"New {finalCat} Event Captured!";
+                    if (string.IsNullOrWhiteSpace(_typedHeadline))
+                        headline = $"New {finalCat} Event Captured!";
                 }
             }
 
